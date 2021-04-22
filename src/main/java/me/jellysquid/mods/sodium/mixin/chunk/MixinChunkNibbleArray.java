@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 /**
- * An optimized implementation of ChunkNibbleArray which uses bit-banging instead of a conditional to select
+ * An optimized implementation of NibbleArray which uses bit-banging instead of a conditional to select
  * the right bit index of a nibble.
  */
 @Mixin(NibbleArray.class)

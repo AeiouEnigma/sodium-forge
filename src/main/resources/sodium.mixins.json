@@ -25,7 +25,7 @@
     "ai.poi.PointOfInterestSetMixin",
     "ai.poi.PointOfInterestTypeMixin",
     "ai.poi.SerializingRegionBasedStorageMixin",
-    "ai.poi.fast_portals.PortalForcerMixin",
+    //"ai.poi.fast_portals.PortalForcerMixin",
     "ai.raid.PickupBannerAsLeaderGoalMixin",
     "ai.raid.RaidMixin",
     "ai.task.CompositeTaskMixin",

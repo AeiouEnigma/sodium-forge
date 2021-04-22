@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Optional;
 
+//Mixin disabled due to crash when going through a nether portal. TODO: Fix this
 @Mixin(Teleporter.class)
 public class PortalForcerMixin {
     @Shadow

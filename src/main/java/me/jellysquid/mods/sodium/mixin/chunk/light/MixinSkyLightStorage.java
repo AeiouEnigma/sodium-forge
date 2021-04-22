@@ -119,11 +119,11 @@ public abstract class MixinSkyLightStorage extends MixinLightStorage<SkyLightSto
     }
 
     @Redirect(
-        method = "getOrCreateArray(J)Lnet/minecraft/world/chunk/NibbleArray;",
-        at = @At(
-            value = "NEW",
-            target = "()Lnet/minecraft/world/chunk/NibbleArray;"
-        )
+            method = "getOrCreateArray(J)Lnet/minecraft/world/chunk/NibbleArray;",
+            at = @At(
+                    value = "NEW",
+                    target = "Lnet/minecraft/world/chunk/NibbleArray;"
+            )
     )
     private NibbleArray initializeLightmap(final long pos) {
         final NibbleArray ret = new NibbleArray();

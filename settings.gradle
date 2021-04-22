@@ -1,7 +1,7 @@
 pluginManagement {
     repositories {
         jcenter()
-        maven {
+        maven {//uhhhh is this necessary to keep on a forge mod?
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
