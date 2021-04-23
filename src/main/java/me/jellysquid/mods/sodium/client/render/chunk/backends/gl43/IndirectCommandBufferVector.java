@@ -3,6 +3,7 @@ package me.jellysquid.mods.sodium.client.render.chunk.backends.gl43;
 import me.jellysquid.mods.sodium.client.render.chunk.multidraw.StructBuffer;
 import org.lwjgl.system.MemoryUtil;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public class IndirectCommandBufferVector extends StructBuffer {
@@ -15,11 +16,11 @@ public class IndirectCommandBufferVector extends StructBuffer {
     }
 
     public void begin() {
-        this.buffer.clear();
+        ((Buffer)this.buffer).clear();
     }
 
     public void end() {
-        this.buffer.flip();
+        ((Buffer)this.buffer).flip();
     }
 
     public void pushCommandBuffer(ByteBuffer buffer) {

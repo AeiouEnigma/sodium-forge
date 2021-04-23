@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -33,7 +34,7 @@ public class MixinBufferBuilder {
      */
     @Overwrite
     public void sortVertexData(float cameraX, float cameraY, float cameraZ) {
-        this.byteBuffer.clear();
+        ((Buffer)this.byteBuffer).clear();
         FloatBuffer floatBuffer = this.byteBuffer.asFloatBuffer();
 
         int vertexStride = this.vertexFormat.getSize();
@@ -63,7 +64,7 @@ public class MixinBufferBuilder {
 
                 if (m != l) {
                     sliceQuad(floatBuffer, m, quadStride, quadStart);
-                    tmp.clear();
+                    ((Buffer)tmp).clear();
                     tmp.put(floatBuffer);
 
                     int n = m;
@@ -80,7 +81,7 @@ public class MixinBufferBuilder {
                     }
 
                     sliceQuad(floatBuffer, l, quadStride, quadStart);
-                    tmp.flip();
+                    ((Buffer)tmp).flip();
 
                     floatBuffer.put(tmp);
                 }
@@ -97,8 +98,8 @@ public class MixinBufferBuilder {
     private static void sliceQuad(FloatBuffer floatBuffer, int quadIdx, int quadStride, int quadStart) {
         int base = quadStart + (quadIdx * quadStride);
 
-        floatBuffer.limit(base + quadStride);
-        floatBuffer.position(base);
+        ((Buffer)floatBuffer).limit(base + quadStride);
+        ((Buffer)floatBuffer).position(base);
     }
 
     private static float getDistanceSq(FloatBuffer buffer, float xCenter, float yCenter, float zCenter, int stride, int start) {

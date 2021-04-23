@@ -12,6 +12,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.RenderType;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -93,7 +94,7 @@ public class ChunkBuildBuffers {
             }
         }
 
-        buffer.flip();
+        ((Buffer)buffer).flip();
         meshData.setVertexData(new VertexData(buffer, this.format));
 
         return meshData;

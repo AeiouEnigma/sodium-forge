@@ -4,6 +4,7 @@ import me.jellysquid.mods.sodium.client.util.UnsafeUtil;
 import org.lwjgl.system.MemoryUtil;
 import sun.misc.Unsafe;
 
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
@@ -28,15 +29,15 @@ public abstract class ChunkDrawCallBatcher extends StructBuffer {
     }
 
     public void begin() {
-        this.buffer.clear();
+        ((Buffer)this.buffer).clear();
         this.count = 0;
 
         this.isBuilding = true;
     }
 
     public void end() {
-        this.buffer.position(this.count * this.stride);
-        this.buffer.flip();
+        ((Buffer)this.buffer).position(this.count * this.stride);
+        ((Buffer)this.buffer).flip();
 
         this.isBuilding = false;
     }
