@@ -52,6 +52,8 @@ public class SodiumConfig {
         this.addMixinRule("chunk.section_update_tracking", true);
         this.addMixinRule("chunk.serialization", true);
 
+        this.addMixinRule("client.world", true);
+
         this.addMixinRule("collections", true);
         this.addMixinRule("collections.entity_filtering", true);
 
@@ -167,7 +169,7 @@ public class SodiumConfig {
         }
     }
 
-    private void applyModOverrides() {
+/*    private void applyModOverrides() {
         return;
 //        for (ModContainer container : FabricLoader.getInstance().getAllMods()) {
 //            ModMetadata meta = container.getMetadata();
@@ -212,7 +214,7 @@ public class SodiumConfig {
 //            option.addModOverride(enabled, meta.getId());
 //        }
     }
-
+*/
     /**
      * Returns the effective option for the specified class name. This traverses the package path of the given mixin
      * and checks each root for configuration rules. If a configuration rule disables a package, all mixins located in
@@ -271,7 +273,7 @@ public class SodiumConfig {
 
         SodiumConfig config = new SodiumConfig();
         config.readProperties(props);
-        config.applyModOverrides();
+        //config.applyModOverrides();
 
         return config;
     }
