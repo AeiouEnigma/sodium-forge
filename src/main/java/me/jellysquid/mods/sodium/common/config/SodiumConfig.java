@@ -25,9 +25,11 @@ public class SodiumConfig {
 
         this.addMixinRule("ai", true);
         this.addMixinRule("ai.goal", true);
-        this.addMixinRule("ai.nearby_entity_tracking", false);
+        this.addMixinRule("ai.nearby_entity_tracking", true);
+        this.addMixinRule("ai.nearby_entity_tracking.goals", false); //KEEP DISABLED, causes crash on startup
         this.addMixinRule("ai.pathing", true);
         this.addMixinRule("ai.poi", true);
+        this.addMixinRule("ai.poi.fast_portals", false); //KEEP DISABLED, causes crash when going through nether portals
         this.addMixinRule("ai.raid", true);
         this.addMixinRule("ai.task", true);
 
@@ -91,7 +93,7 @@ public class SodiumConfig {
         this.addMixinRule("tag", true);
 
         this.addMixinRule("world", true);
-        this.addMixinRule("world.block_entity_ticking", true);
+        this.addMixinRule("world.block_entity_ticking", false); //I don't know why Pannoniae disabled this but I'm trusting that decision
         this.addMixinRule("world.chunk_access", true);
         this.addMixinRule("world.chunk_inline_block_access", true);
         this.addMixinRule("world.chunk_task_system", true);
@@ -116,7 +118,7 @@ public class SodiumConfig {
         this.addMixinRule("features.entity.smooth_lighting", true);
         this.addMixinRule("features.gui", true);
         this.addMixinRule("features.gui.font", true);
-        this.addMixinRule("features.item", true);
+        this.addMixinRule("features.item", false); //I don't know why Pannoniae disabled this but I'm trusting that decision
         this.addMixinRule("features.matrix_stack", true);
         this.addMixinRule("features.model", true);
         this.addMixinRule("features.options", true);

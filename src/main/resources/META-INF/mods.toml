@@ -9,7 +9,7 @@ modLoader="javafml" #mandatory
 loaderVersion="[32,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
 # The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
 # Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
-license="All rights reserved"
+license="GNU Lesser GPL Version 3"
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL="http://my.issue.tracker/" #optional
 # A list of mods - how many allowed here is determined by the individual mod loader
@@ -17,9 +17,9 @@ issueTrackerURL="http://my.issue.tracker/" #optional
 # The modid of the mod
 modId="sodium" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-version="${file.jarVersion}" #mandatory
+version="2.1" #"${file.modVersion}" #mandatory
  # A display name for the mod
-displayName="SodiumoPhosphoroLithium" #mandatory
+displayName="Sodium, Lithium, and Phosphor" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 #updateJSONURL="http://myurl.me/" #optional
 # A URL for the "homepage" for this mod, displayed in the mod UI
@@ -27,12 +27,12 @@ displayURL="https://jellysquid.me" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="examplemod.png" #optional
 # A text field displayed in the mod UI
-credits="hanetzer" #optional
+credits="Pannoniae, hanetzer, yatsukiko, AeiouEnigma" #optional
 # A text field displayed in the mod UI
-authors="JellySquid, Pannoniae and somewhat yatsukiko" #optional
+authors="JellySquid" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Sodium is an free and open-source optimization mod for Minecraft which improves frame rates and reduces lag spikes.
+Sodium is a free and open-source optimization mod for Minecraft which improves frame rates and reduces lag spikes.
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.examplemod]] #optional
