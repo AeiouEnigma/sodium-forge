@@ -1,10 +1,10 @@
 package me.jellysquid.mods.sodium.client.render.chunk.backends.gl43;
 
+import me.jellysquid.mods.sodium.client.render.chunk.multidraw.ChunkDrawCallBatcher;
 import me.jellysquid.mods.sodium.client.render.chunk.multidraw.StructBuffer;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.Buffer;
-import java.nio.ByteBuffer;
 
 public class IndirectCommandBufferVector extends StructBuffer {
     protected IndirectCommandBufferVector(int capacity) {
@@ -23,14 +23,14 @@ public class IndirectCommandBufferVector extends StructBuffer {
         ((Buffer)this.buffer).flip();
     }
 
-    public void pushCommandBuffer(ByteBuffer buffer) {
-        int n = buffer.remaining();
+    public void pushCommandBuffer(ChunkDrawCallBatcher batcher) {
+        int len = batcher.getArrayLength();
 
-        if (this.buffer.remaining() < n) {
-            this.growBuffer(n);
+        if (this.buffer.remaining() < len) {
+            this.growBuffer(len);
         }
 
-        this.buffer.put(buffer);
+        this.buffer.put(batcher.getBuffer());
     }
 
     protected void growBuffer(int n) {

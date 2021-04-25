@@ -39,10 +39,6 @@ public class SodiumVertexFormats {
                 buffer.putFloat(position, quad.getX(i));
                 buffer.putFloat(position + 4, quad.getY(i));
                 buffer.putFloat(position + 8, quad.getZ(i));
-                buffer.putInt(position + 16, quad.getColor(i));
-                buffer.putFloat(position + 20, quad.getTexU(i));
-                buffer.putFloat(position + 24, quad.getTexV(i));
-                buffer.putInt(position + 28, encodeLightMapTexCoord(quad.getLight(i)));
 
                 position += 32;
             }

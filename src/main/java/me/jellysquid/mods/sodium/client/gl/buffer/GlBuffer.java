@@ -27,7 +27,6 @@ public abstract class GlBuffer extends GlObject {
     public abstract void allocate(int target, int size);
 
     public void upload(int target, VertexData data) {
-
         this.upload(target, data.buffer);
     }
 
