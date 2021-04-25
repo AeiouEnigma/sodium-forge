@@ -18,13 +18,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.renderer.color.IBlockColor;
-import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -32,9 +29,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockDisplayReader;
-import net.minecraft.world.biome.BiomeColors;
 import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraft.fluid.Fluids;
 
 public class FluidRenderer {
     private static final IBlockColor FLUID_COLOR_PROVIDER = (state, world, pos, tintIndex) -> {

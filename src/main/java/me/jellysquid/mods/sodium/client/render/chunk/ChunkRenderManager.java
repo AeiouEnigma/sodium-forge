@@ -18,6 +18,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderData;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.ChunkRenderList;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.ChunkRenderListIterator;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
+import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPassManager;
 import me.jellysquid.mods.sodium.client.util.math.FrustumExtended;
 import me.jellysquid.mods.sodium.client.world.ChunkStatusListener;
 import me.jellysquid.mods.sodium.common.util.DirectionUtil;
@@ -66,9 +67,9 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
     private final ObjectArrayFIFOQueue<ChunkRenderContainer<T>> rebuildQueue = new ObjectArrayFIFOQueue<>();
 
     @SuppressWarnings("unchecked")
-    private final ChunkRenderList<T>[] chunkRenderLists;
-
+    private final ChunkRenderList<T>[] chunkRenderLists = new ChunkRenderList[BlockRenderPass.COUNT];
     private final ObjectList<ChunkRenderContainer<T>> tickableChunks = new ObjectArrayList<>();
+
     private final ObjectList<TileEntity> visibleBlockEntities = new ObjectArrayList<>();
 
     private final SodiumWorldRenderer renderer;
@@ -86,19 +87,17 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
 
     private int visibleChunkCount;
 
-    @SuppressWarnings("unchecked")
-    public ChunkRenderManager(SodiumWorldRenderer renderer, ChunkRenderBackend<T> backend, ClientWorld world, int renderDistance) {
+    public ChunkRenderManager(SodiumWorldRenderer renderer, ChunkRenderBackend<T> backend, BlockRenderPassManager renderPassManager, ClientWorld world, int renderDistance) {
+
         this.backend = backend;
         this.renderer = renderer;
         this.world = world;
         this.renderDistance = renderDistance;
 
         this.builder = new ChunkBuilder<>(backend.getVertexFormat(), this.backend);
-        this.builder.init(world);
+        this.builder.init(world, renderPassManager);
 
         this.dirty = true;
-
-        this.chunkRenderLists = new ChunkRenderList[backend.getRenderPassManager().getPassCount()];
 
         for (int i = 0; i < this.chunkRenderLists.length; i++) {
             this.chunkRenderLists[i] = new ChunkRenderList<>();
@@ -400,11 +399,13 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
         return render;
     }
 
-    public void renderChunks(MatrixStack matrixStack, BlockRenderPass pass, double x, double y, double z) {
-        ChunkRenderListIterator<T> iterator = this.chunkRenderLists[pass.ordinal()]
-                .iterator(pass.isForwardRendering());
+    public void renderLayer(MatrixStack matrixStack, BlockRenderPass pass, double x, double y, double z) {
+        ChunkRenderList<T> chunkRenderList = this.chunkRenderLists[pass.ordinal()];
+        ChunkRenderListIterator<T> iterator = chunkRenderList.iterator(pass.isTranslucent());
 
-        this.backend.renderChunks(matrixStack, pass, iterator, new ChunkCameraContext(x, y, z));
+        this.backend.begin(matrixStack);
+        this.backend.render(iterator, new ChunkCameraContext(x, y, z));
+        this.backend.end(matrixStack);
     }
 
     public void tickVisibleRenders() {
@@ -452,7 +453,7 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
         this.dirty |= this.builder.performPendingUploads();
 
         if (!futures.isEmpty()) {
-            this.backend.uploadChunks(new FutureDequeDrain<>(futures));
+            this.backend.upload(new FutureDequeDrain<>(futures));
         }
     }
 

@@ -3,7 +3,6 @@ package me.jellysquid.mods.sodium.mixin.features.chunk_rendering;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import me.jellysquid.mods.sodium.client.render.SodiumWorldRenderer;
-import me.jellysquid.mods.sodium.client.render.chunk.passes.WorldRenderPhase;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
@@ -79,11 +78,7 @@ public abstract class MixinWorldRenderer {
      */
     @Overwrite
     private void renderBlockLayer(RenderType renderLayer, MatrixStack matrixStack, double x, double y, double z) {
-        if (renderLayer == RenderType.getSolid()) {
-            this.renderer.drawChunkLayers(WorldRenderPhase.OPAQUE, matrixStack, x, y, z);
-        } else if (renderLayer == RenderType.getTranslucent()) {
-            this.renderer.drawChunkLayers(WorldRenderPhase.TRANSLUCENT, matrixStack, x, y, z);
-        }
+        this.renderer.drawChunkLayer(renderLayer, matrixStack, x, y, z);
     }
 
     /**

@@ -1,7 +1,6 @@
 package me.jellysquid.mods.sodium.client.render.chunk.tasks;
 
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkGraphicsState;
-import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderBackend;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderContainer;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
@@ -42,20 +41,18 @@ import java.util.Objects;
  * array allocations, they are pooled to ensure that the garbage collector doesn't become overloaded.
  */
 public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkRenderBuildTask<T> {
-    private final ChunkRenderBackend<T> renderBackend;
     private final ChunkRenderContainer<T> render;
     private final ChunkBuilder<T> chunkBuilder;
     private final Vector3d camera;
     private final WorldSlice slice;
     private final BlockPos offset;
 
-    public ChunkRenderRebuildTask(ChunkBuilder<T> chunkBuilder, ChunkRenderBackend<T> renderBackend, ChunkRenderContainer<T> render, WorldSlice slice) {
-        this.renderBackend = renderBackend;
+    public ChunkRenderRebuildTask(ChunkBuilder<T> chunkBuilder, ChunkRenderContainer<T> render, WorldSlice slice, BlockPos offset) {
         this.chunkBuilder = chunkBuilder;
         this.render = render;
         this.camera = chunkBuilder.getCameraPosition();
         this.slice = slice;
-        this.offset = render.getRenderOrigin();
+        this.offset = offset;
     }
 
     @Override
@@ -149,8 +146,8 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
             }
         }
 
-        for (BlockRenderPass pass : this.renderBackend.getRenderPassManager().getSortedPasses()) {
-            ChunkMeshData mesh = buffers.createMesh(pass);
+        for (BlockRenderPass pass : BlockRenderPass.VALUES) {
+            ChunkMeshData mesh = buffers.createMesh(this.camera, this.render.getRenderOrigin(), pass);
 
             if (mesh != null) {
                 renderData.setMesh(pass, mesh);

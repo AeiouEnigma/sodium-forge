@@ -118,7 +118,7 @@ public class SodiumConfig {
         this.addMixinRule("features.entity.smooth_lighting", true);
         this.addMixinRule("features.gui", true);
         this.addMixinRule("features.gui.font", true);
-        this.addMixinRule("features.item", false); //I don't know why Pannoniae disabled this but I'm trusting that decision
+        this.addMixinRule("features.item", true); //Watch for issues relating to this, Pannoniae must've disabled it for a reason
         this.addMixinRule("features.matrix_stack", true);
         this.addMixinRule("features.model", true);
         this.addMixinRule("features.options", true);

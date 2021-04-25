@@ -1,5 +1,6 @@
-package me.jellysquid.mods.sodium.client.render.chunk.backends.gl20;
+package me.jellysquid.mods.sodium.client.render.chunk.backends.gl30;
 
+import me.jellysquid.mods.sodium.client.gl.array.GlVertexArray;
 import me.jellysquid.mods.sodium.client.gl.attribute.GlVertexFormat;
 import me.jellysquid.mods.sodium.client.gl.buffer.GlBuffer;
 import me.jellysquid.mods.sodium.client.gl.buffer.GlMutableBuffer;
@@ -10,14 +11,42 @@ import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkMeshData;
 import me.jellysquid.mods.sodium.client.render.chunk.oneshot.ChunkOneshotGraphicsState;
 import org.lwjgl.opengl.GL15;
 
-public class GL20GraphicsState extends ChunkOneshotGraphicsState {
+public class VAOGraphicsState extends ChunkOneshotGraphicsState {
+    private final GlVertexArray vertexArray;
     private final GlBuffer vertexBuffer;
-    private GlVertexFormat<?> vertexFormat;
 
-    public GL20GraphicsState(MemoryTracker memoryTracker, ChunkRenderContainer<?> container) {
+    public VAOGraphicsState(MemoryTracker memoryTracker, ChunkRenderContainer<?> container) {
         super(memoryTracker, container);
 
         this.vertexBuffer = new GlMutableBuffer(GL15.GL_STATIC_DRAW);
+        this.vertexArray = new GlVertexArray();
+    }
+
+    @Override
+    public void upload(ChunkMeshData meshData) {
+        VertexData vertexData = meshData.takeVertexData();
+
+        this.vertexArray.bind();
+
+        this.vertexBuffer.bind(GL15.GL_ARRAY_BUFFER);
+
+        this.memoryTracker.onMemoryFreeAndRelease(this.vertexBuffer.getSize());
+        this.vertexBuffer.upload(GL15.GL_ARRAY_BUFFER, vertexData);
+        this.memoryTracker.onMemoryAllocateAndUse(this.vertexBuffer.getSize());
+
+        GlVertexFormat<?> vertexFormat = vertexData.format;
+        vertexFormat.bindVertexAttributes();
+        vertexFormat.enableVertexAttributes();
+
+        this.setupModelParts(meshData, vertexFormat);
+
+        this.vertexBuffer.unbind(GL15.GL_ARRAY_BUFFER);
+        this.vertexArray.unbind();
+    }
+
+    @Override
+    public void bind() {
+        this.vertexArray.bind();
     }
 
     @Override
@@ -25,28 +54,6 @@ public class GL20GraphicsState extends ChunkOneshotGraphicsState {
         this.memoryTracker.onMemoryFreeAndRelease(this.vertexBuffer.getSize());
 
         this.vertexBuffer.delete();
-    }
-
-    @Override
-    public void upload(ChunkMeshData meshData) {
-        VertexData data = meshData.takeVertexData();
-
-        this.vertexBuffer.bind(GL15.GL_ARRAY_BUFFER);
-
-        this.memoryTracker.onMemoryFreeAndRelease(this.vertexBuffer.getSize());
-        this.vertexBuffer.upload(GL15.GL_ARRAY_BUFFER, data);
-        this.memoryTracker.onMemoryAllocateAndUse(this.vertexBuffer.getSize());
-
-        this.vertexBuffer.unbind(GL15.GL_ARRAY_BUFFER);
-
-        this.vertexFormat = data.format;
-
-        this.setupModelParts(meshData, this.vertexFormat);
-    }
-
-    @Override
-    public void bind() {
-        this.vertexBuffer.bind(GL15.GL_ARRAY_BUFFER);
-        this.vertexFormat.bindVertexAttributes();
+        this.vertexArray.delete();
     }
 }

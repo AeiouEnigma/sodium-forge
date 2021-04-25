@@ -1,7 +1,9 @@
 package me.jellysquid.mods.phosphor.common.util.collections;
 
 import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntMaps;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 
 import java.util.concurrent.locks.StampedLock;
 

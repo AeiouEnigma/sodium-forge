@@ -49,7 +49,7 @@ public class ChunkRenderContainer<T extends ChunkGraphicsState> {
         this.adjacent = new ChunkRenderContainer[DirectionUtil.DIRECTION_COUNT];
 
         //noinspection unchecked
-        this.graphicsStates = (T[]) Array.newInstance(backend.getGraphicsStateType(), backend.getRenderPassManager().getPassCount());
+        this.graphicsStates = (T[]) Array.newInstance(backend.getGraphicsStateType(), BlockRenderPass.COUNT);
     }
 
     /**

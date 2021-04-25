@@ -1,6 +1,5 @@
 package me.jellysquid.mods.sodium.client.gl.shader;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import me.jellysquid.mods.sodium.client.gl.GlObject;
 import me.jellysquid.mods.sodium.client.gl.attribute.GlVertexAttribute;
 import net.minecraft.util.ResourceLocation;
@@ -26,7 +25,7 @@ public abstract class GlProgram extends GlObject {
         return new Builder(ResourceLocation);
     }
 
-    public void bind(MatrixStack matrixStack) {
+    public void bind() {
         GL20.glUseProgram(this.handle());
     }
 
