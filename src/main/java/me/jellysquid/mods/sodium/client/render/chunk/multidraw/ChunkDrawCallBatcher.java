@@ -36,7 +36,7 @@ public abstract class ChunkDrawCallBatcher extends StructBuffer {
         this.count = 0;
         this.arrayLength = 0;
 
-        ((Buffer)this.buffer).clear();
+        ((Buffer)this.buffer).limit(this.buffer.capacity());
     }
 
     public void end() {
@@ -44,6 +44,7 @@ public abstract class ChunkDrawCallBatcher extends StructBuffer {
 
         this.arrayLength = this.count * this.stride;
         ((Buffer)this.buffer).limit(this.arrayLength);
+        ((Buffer)this.buffer).position(0);
     }
 
     public boolean isBuilding() {
