@@ -104,7 +104,7 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                                 modelData = EmptyModelData.INSTANCE;
                             }
                             if (pipeline.renderBlock(this.slice, blockState, pos.setPos(x, y, z), buffers.get(layer), true, modelData)) {
-                                bounds.addBlock(x, y, z);
+                                bounds.addBlock(relX, relY, relZ);
                             }
                             ForgeHooksClient.setRenderLayer(null);
                         }
@@ -118,7 +118,7 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                         RenderType layer = RenderTypeLookup.getRenderType(fluidState);
 
                         if (pipeline.renderFluid(this.slice, fluidState, pos.setPos(x, y, z), buffers.get(layer))) {
-                            bounds.addBlock(x, y, z);
+                            bounds.addBlock(relX, relY, relZ);
                         }
                     }
 
@@ -131,7 +131,7 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                             if (renderer != null) {
                                 renderData.addBlockEntity(entity, !renderer.isGlobalRenderer(entity));
 
-                                bounds.addBlock(x, y, z);
+                                bounds.addBlock(relX, relY, relZ);
                             }
                         }
                     }
