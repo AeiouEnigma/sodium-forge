@@ -61,8 +61,8 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
         VisGraph occluder = new VisGraph();
         ChunkRenderBounds.Builder bounds = new ChunkRenderBounds.Builder();
 
+        buffers.init();
         pipeline.init(this.slice, this.slice.getOrigin());
-        buffers.init(renderData);
 
         int baseX = this.render.getOriginX();
         int baseY = this.render.getOriginY();
@@ -91,35 +91,33 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                     int z = baseZ + relZ;
 
                     if (block.getRenderType(blockState) == BlockRenderType.MODEL) {
+                        buffers.setRenderOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
                         for (RenderType layer : RenderType.getBlockRenderTypes()) {
                             if (!RenderTypeLookup.canRenderInLayer(blockState, layer)) {
                                 continue;
                             }
 
                             ForgeHooksClient.setRenderLayer(layer);
-                            ChunkBuildBuffers.ChunkBuildBufferDelegate builder = buffers.get(layer);
-                            builder.setOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
 
                             IModelData modelData = ModelDataManager.getModelData(Objects.requireNonNull(Minecraft.getInstance().world), pos);
                             if (modelData == null) {
                                 modelData = EmptyModelData.INSTANCE;
                             }
-                            if (pipeline.renderBlock(this.slice, blockState, pos.setPos(x, y, z), builder, true, modelData)) {
+                            if (pipeline.renderBlock(this.slice, blockState, pos.setPos(x, y, z), buffers.get(layer), true, modelData)) {
                                 bounds.addBlock(x, y, z);
                             }
                             ForgeHooksClient.setRenderLayer(null);
                         }
-                    }
+                  }
 
                     FluidState fluidState = block.getFluidState(blockState);
 
                     if (!fluidState.isEmpty()) {
+                        buffers.setRenderOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
+
                         RenderType layer = RenderTypeLookup.getRenderType(fluidState);
 
-                        ChunkBuildBuffers.ChunkBuildBufferDelegate builder = buffers.get(layer);
-                        builder.setOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
-
-                        if (pipeline.renderFluid(this.slice, fluidState, pos.setPos(x, y, z), builder)) {
+                        if (pipeline.renderFluid(this.slice, fluidState, pos.setPos(x, y, z), buffers.get(layer))) {
                             bounds.addBlock(x, y, z);
                         }
                     }
@@ -146,7 +144,7 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
         }
 
         for (BlockRenderPass pass : BlockRenderPass.VALUES) {
-            ChunkMeshData mesh = buffers.createMesh(this.camera, this.render.getRenderOrigin(), pass);
+            ChunkMeshData mesh = buffers.createMesh(pass);
 
             if (mesh != null) {
                 renderData.setMesh(pass, mesh);

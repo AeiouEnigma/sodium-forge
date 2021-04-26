@@ -5,11 +5,13 @@ import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
 import me.jellysquid.mods.sodium.client.model.light.LightPipelineProvider;
 import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuad;
+import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuadViewMutable;
 import me.jellysquid.mods.sodium.client.model.quad.blender.BiomeColorBlender;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFlags;
-import me.jellysquid.mods.sodium.client.model.quad.sink.ModelQuadSinkDelegate;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
 import me.jellysquid.mods.sodium.client.util.Norm3b;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import me.jellysquid.mods.sodium.common.util.DirectionUtil;
@@ -88,7 +90,7 @@ public class FluidRenderer {
         return true;
     }
 
-    public boolean render(IBlockDisplayReader world, FluidState fluidState, BlockPos pos, ModelQuadSinkDelegate consumer) {
+    public boolean render(IBlockDisplayReader world, FluidState fluidState, BlockPos pos, ChunkModelBuffers buffers) {
         int posX = pos.getX();
         int posY = pos.getY();
         int posZ = pos.getZ();
@@ -120,7 +122,6 @@ public class FluidRenderer {
         float yOffset = sfDown ? 0.001F : 0.0F;
 
         final ModelQuadViewMutable quad = this.quad;
-        final QuadLightData light = this.quadLightData;
 
         LightMode lightMode = !colored && Minecraft.isAmbientOcclusionEnabled() ? LightMode.SMOOTH : LightMode.FLAT;
         LightPipeline lighter = this.lighters.getLighter(lightMode);
@@ -135,33 +136,33 @@ public class FluidRenderer {
 
             Vector3d velocity = fluidState.getFlow(world, pos);
 
-            TextureAtlasSprite TextureAtlasSprite;
+            TextureAtlasSprite sprite;
             float u1, u2, u3, u4;
             float v1, v2, v3, v4;
 
             if (velocity.x == 0.0D && velocity.z == 0.0D) {
-                TextureAtlasSprite = sprites[0];
-                u1 = TextureAtlasSprite.getInterpolatedU(0.0D);
-                v1 = TextureAtlasSprite.getInterpolatedV(0.0D);
+                sprite = sprites[0];
+                u1 = sprite.getInterpolatedU(0.0D);
+                v1 = sprite.getInterpolatedV(0.0D);
                 u2 = u1;
-                v2 = TextureAtlasSprite.getInterpolatedV(16.0D);
-                u3 = TextureAtlasSprite.getInterpolatedU(16.0D);
+                v2 = sprite.getInterpolatedV(16.0D);
+                u3 = sprite.getInterpolatedU(16.0D);
                 v3 = v2;
                 u4 = u3;
                 v4 = v1;
             } else {
-                TextureAtlasSprite = sprites[1];
+                sprite = sprites[1];
                 float dir = (float) MathHelper.atan2(velocity.z, velocity.x) - (1.5707964f);
                 float sin = MathHelper.sin(dir) * 0.25F;
                 float cos = MathHelper.cos(dir) * 0.25F;
-                u1 = TextureAtlasSprite.getInterpolatedU(8.0F + (-cos - sin) * 16.0F);
-                v1 = TextureAtlasSprite.getInterpolatedV(8.0F + (-cos + sin) * 16.0F);
-                u2 = TextureAtlasSprite.getInterpolatedU(8.0F + (-cos + sin) * 16.0F);
-                v2 = TextureAtlasSprite.getInterpolatedV(8.0F + (cos + sin) * 16.0F);
-                u3 = TextureAtlasSprite.getInterpolatedU(8.0F + (cos + sin) * 16.0F);
-                v3 = TextureAtlasSprite.getInterpolatedV(8.0F + (cos - sin) * 16.0F);
-                u4 = TextureAtlasSprite.getInterpolatedU(8.0F + (cos - sin) * 16.0F);
-                v4 = TextureAtlasSprite.getInterpolatedV(8.0F + (-cos - sin) * 16.0F);
+                u1 = sprite.getInterpolatedU(8.0F + (-cos - sin) * 16.0F);
+                v1 = sprite.getInterpolatedV(8.0F + (-cos + sin) * 16.0F);
+                u2 = sprite.getInterpolatedU(8.0F + (-cos + sin) * 16.0F);
+                v2 = sprite.getInterpolatedV(8.0F + (cos + sin) * 16.0F);
+                u3 = sprite.getInterpolatedU(8.0F + (cos + sin) * 16.0F);
+                v3 = sprite.getInterpolatedV(8.0F + (cos - sin) * 16.0F);
+                u4 = sprite.getInterpolatedU(8.0F + (cos - sin) * 16.0F);
+                v4 = sprite.getInterpolatedV(8.0F + (-cos - sin) * 16.0F);
             }
 
             float uAvg = (u1 + u2 + u3 + u4) / 4.0F;
@@ -179,43 +180,44 @@ public class FluidRenderer {
             v3 = MathHelper.lerp(s3, v3, vAvg);
             v4 = MathHelper.lerp(s3, v4, vAvg);
 
-            quad.setSprite(TextureAtlasSprite);
+            quad.setSprite(sprite);
 
-            this.setVertex(quad, 0, 0.0f, 0.0f + h1, 0.0f, u1, v1);
-            this.setVertex(quad, 1, 0.0f, 0.0f + h2, 1.0F, u2, v2);
-            this.setVertex(quad, 2, 1.0F, 0.0f + h3, 1.0F, u3, v3);
-            this.setVertex(quad, 3, 1.0F, 0.0f + h4, 0.0f, u4, v4);
+            this.setVertex(quad, 0, 0.0f, h1, 0.0f, u1, v1);
+            this.setVertex(quad, 1, 0.0f, h2, 1.0F, u2, v2);
+            this.setVertex(quad, 2, 1.0F, h3, 1.0F, u3, v3);
+            this.setVertex(quad, 3, 1.0F, h4, 0.0f, u4, v4);
 
             this.calculateQuadColors(quad, world, pos, lighter, Direction.UP, 1.0F, colored);
-            this.flushQuad(consumer, quad, Direction.UP, false);
+            this.flushQuad(buffers, quad, Direction.UP, false);
 
             if (fluidState.shouldRenderSides(world, this.scratchPos.setPos(posX, posY + 1, posZ))) {
-                this.setVertex(quad, 3, 0.0f, 0.0f + h1, 0.0f, u1, v1);
-                this.setVertex(quad, 2, 0.0f, 0.0f + h2, 1.0F, u2, v2);
-                this.setVertex(quad, 1, 1.0F, 0.0f + h3, 1.0F, u3, v3);
-                this.setVertex(quad, 0, 1.0F, 0.0f + h4, 0.0f, u4, v4);
-                this.flushQuad(consumer, quad, Direction.DOWN, true);
+                this.setVertex(quad, 3, 0.0f, h1, 0.0f, u1, v1);
+                this.setVertex(quad, 2, 0.0f, h2, 1.0F, u2, v2);
+                this.setVertex(quad, 1, 1.0F, h3, 1.0F, u3, v3);
+                this.setVertex(quad, 0, 1.0F, h4, 0.0f, u4, v4);
+
+                this.flushQuad(buffers, quad, Direction.DOWN, true);
             }
 
             rendered = true;
         }
 
         if (sfDown) {
-            TextureAtlasSprite TextureAtlasSprite = sprites[0];
+            TextureAtlasSprite sprite = sprites[0];
 
-            float minU = TextureAtlasSprite.getMinU();
-            float maxU = TextureAtlasSprite.getMaxU();
-            float minV = TextureAtlasSprite.getMinV();
-            float maxV = TextureAtlasSprite.getMaxV();
-            quad.setSprite(TextureAtlasSprite);
+            float minU = sprite.getMinU();
+            float maxU = sprite.getMaxU();
+            float minV = sprite.getMinV();
+            float maxV = sprite.getMaxV();
+            quad.setSprite(sprite);
 
-            this.setVertex(quad, 0, 0.0f, 0.0f + yOffset, 1.0F, minU, maxV);
-            this.setVertex(quad, 1, 0.0f, 0.0f + yOffset, 0.0f, minU, minV);
-            this.setVertex(quad, 2, 1.0F, 0.0f + yOffset, 0.0f, maxU, minV);
-            this.setVertex(quad, 3, 1.0F, 0.0f + yOffset, 1.0F, maxU, maxV);
+            this.setVertex(quad, 0, 0.0f, yOffset, 1.0F, minU, maxV);
+            this.setVertex(quad, 1, 0.0f, yOffset, 0.0f, minU, minV);
+            this.setVertex(quad, 2, 1.0F, yOffset, 0.0f, maxU, minV);
+            this.setVertex(quad, 3, 1.0F, yOffset, 1.0F, maxU, maxV);
 
             this.calculateQuadColors(quad, world, pos, lighter, Direction.DOWN, 1.0F, colored);
-            this.flushQuad(consumer, quad, Direction.DOWN, false);
+            this.flushQuad(buffers, quad, Direction.DOWN, false);
 
             rendered = true;
         }
@@ -288,42 +290,42 @@ public class FluidRenderer {
                 int adjY = posY + dir.getYOffset();
                 int adjZ = posZ + dir.getZOffset();
 
-                TextureAtlasSprite TextureAtlasSprite = sprites[1];
+                TextureAtlasSprite sprite = sprites[1];
 
                 if (sprites[2] != null) {
                     BlockPos posAdj = this.scratchPos.setPos(adjX, adjY, adjZ);
                     Block block = world.getBlockState(posAdj).getBlock();
 
                     if (block == Blocks.GLASS || block instanceof StainedGlassBlock) {
-                        TextureAtlasSprite = sprites[2];
+                        sprite = sprites[2];
                     }
                 }
 
-                float u1 = TextureAtlasSprite.getInterpolatedU(0.0D);
-                float u2 = TextureAtlasSprite.getInterpolatedU(8.0D);
-                float v1 = TextureAtlasSprite.getInterpolatedV((1.0F - c1) * 16.0F * 0.5F);
-                float v2 = TextureAtlasSprite.getInterpolatedV((1.0F - c2) * 16.0F * 0.5F);
-                float v3 = TextureAtlasSprite.getInterpolatedV(8.0D);
+                float u1 = sprite.getInterpolatedU(0.0D);
+                float u2 = sprite.getInterpolatedU(8.0D);
+                float v1 = sprite.getInterpolatedV((1.0F - c1) * 16.0F * 0.5F);
+                float v2 = sprite.getInterpolatedV((1.0F - c2) * 16.0F * 0.5F);
+                float v3 = sprite.getInterpolatedV(8.0D);
 
-                quad.setSprite(TextureAtlasSprite);
+                quad.setSprite(sprite);
 
-                this.setVertex(quad, 0, x2, 0.0f + c2, z2, u2, v2);
-                this.setVertex(quad, 1, x2, 0.0f + yOffset, z2, u2, v3);
-                this.setVertex(quad, 2, x1, 0.0f + yOffset, z1, u1, v3);
-                this.setVertex(quad, 3, x1, 0.0f + c1, z1, u1, v1);
+                this.setVertex(quad, 0, x2, c2, z2, u2, v2);
+                this.setVertex(quad, 1, x2, yOffset, z2, u2, v3);
+                this.setVertex(quad, 2, x1, yOffset, z1, u1, v3);
+                this.setVertex(quad, 3, x1, c1, z1, u1, v1);
 
                 float br = dir.getAxis() == Direction.Axis.Z ? 0.8F : 0.6F;
 
                 this.calculateQuadColors(quad, world, pos, lighter, dir, br, colored);
-                this.flushQuad(consumer, quad, dir, false);
+                this.flushQuad(buffers, quad, dir, false);
 
-                if (TextureAtlasSprite != sprites[2]) {
-                    this.setVertex(quad, 0, x1, 0.0f + c1, z1, u1, v1);
-                    this.setVertex(quad, 1, x1, 0.0f + yOffset, z1, u1, v3);
-                    this.setVertex(quad, 2, x2, 0.0f + yOffset, z2, u2, v3);
-                    this.setVertex(quad, 3, x2, 0.0f + c2, z2, u2, v2);
+                if (sprite != sprites[2]) {
+                    this.setVertex(quad, 0, x1, c1, z1, u1, v1);
+                    this.setVertex(quad, 1, x1, yOffset, z1, u1, v3);
+                    this.setVertex(quad, 2, x2, yOffset, z2, u2, v3);
+                    this.setVertex(quad, 3, x2, c2, z2, u2, v2);
 
-                    this.flushQuad(consumer, quad, dir, true);
+                    this.flushQuad(buffers, quad, dir, true);
                 }
 
                 rendered = true;
@@ -333,7 +335,7 @@ public class FluidRenderer {
         return rendered;
     }
 
-    private void calculateQuadColors(ModelQuadViewMutable quad, IBlockDisplayReader world,  BlockPos pos, LightPipeline lighter, Direction dir, float brightness, boolean colorized) {
+    private void calculateQuadColors(ModelQuadView quad, IBlockDisplayReader world,  BlockPos pos, LightPipeline lighter, Direction dir, float brightness, boolean colorized) {
         QuadLightData light = this.quadLightData;
         lighter.calculate(quad, pos, light, dir, false);
 
@@ -348,7 +350,7 @@ public class FluidRenderer {
         }
     }
 
-    private void flushQuad(ModelQuadSinkDelegate consumer, ModelQuadViewMutable quad, Direction dir, boolean flip) {
+    private void flushQuad(ChunkModelBuffers buffers, ModelQuadView quad, Direction dir, boolean flip) {
         int vertexIdx, lightOrder;
 
         if (flip) {
@@ -359,15 +361,27 @@ public class FluidRenderer {
             lightOrder = 1;
         }
 
+        ModelVertexSink sink = buffers.getSink(ModelQuadFacing.fromDirection(dir));
+        sink.ensureCapacity(4);
+
         for (int i = 0; i < 4; i++) {
-            quad.setColor(i, this.quadColors[vertexIdx]);
-            quad.setLight(i, this.quadLightData.lm[vertexIdx]);
+            float x = quad.getX(i);
+            float y = quad.getY(i);
+            float z = quad.getZ(i);
+
+            int color = this.quadColors[vertexIdx];
+
+            float u = quad.getTexU(i);
+            float v = quad.getTexV(i);
+
+            int light = this.quadLightData.lm[vertexIdx];
+
+            sink.writeQuad(x, y, z, color, u, v, light);
 
             vertexIdx += lightOrder;
         }
 
-        consumer.get(ModelQuadFacing.fromDirection(dir))
-                .write(quad);
+        sink.flush();
     }
 
     private void setVertex(ModelQuadViewMutable quad, int i, float x, float y, float z, float u, float v) {

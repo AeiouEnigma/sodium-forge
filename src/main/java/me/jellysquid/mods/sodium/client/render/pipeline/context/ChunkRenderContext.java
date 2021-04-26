@@ -3,7 +3,7 @@ package me.jellysquid.mods.sodium.client.render.pipeline.context;
 import me.jellysquid.mods.sodium.client.model.light.LightPipelineProvider;
 import me.jellysquid.mods.sodium.client.model.light.cache.ArrayLightDataCache;
 import me.jellysquid.mods.sodium.client.model.quad.blender.BiomeColorBlender;
-import me.jellysquid.mods.sodium.client.model.quad.sink.ModelQuadSinkDelegate;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuffers;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
 import me.jellysquid.mods.sodium.client.render.pipeline.FluidRenderer;
 import me.jellysquid.mods.sodium.client.render.pipeline.RenderContextCommon;
@@ -37,15 +37,15 @@ public class ChunkRenderContext {
         this.models = client.getModelManager().getBlockModelShapes();
     }
 
-    public boolean renderBlock(IBlockDisplayReader world, BlockState state, BlockPos pos, ModelQuadSinkDelegate consumer, boolean cull, IModelData modelData) {
+    public boolean renderBlock(IBlockDisplayReader world, BlockState state, BlockPos pos, ChunkModelBuffers buffers, boolean cull, IModelData modelData) {
         IBakedModel model = this.models.getModel(state);
         long seed = state.getPositionRandom(pos);
 
-        return this.blockRenderer.renderModel(world, state, pos, model, consumer, cull, seed, modelData);
+        return this.blockRenderer.renderModel(world, state, pos, model, buffers, cull, seed, modelData);
     }
 
-    public boolean renderFluid(IBlockDisplayReader world, FluidState fluidState, BlockPos.Mutable pos, ModelQuadSinkDelegate consumer) {
-        return this.fluidRenderer.render(world, fluidState, pos, consumer);
+    public boolean renderFluid(IBlockDisplayReader world, FluidState fluidState, BlockPos.Mutable pos, ChunkModelBuffers buffers) {
+        return this.fluidRenderer.render(world, fluidState, pos, buffers);
     }
 
     public void init(IBlockDisplayReader world, SectionPos pos) {
