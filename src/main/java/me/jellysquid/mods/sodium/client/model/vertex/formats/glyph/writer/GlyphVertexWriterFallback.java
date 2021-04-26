@@ -1,9 +1,9 @@
 package me.jellysquid.mods.sodium.client.model.vertex.formats.glyph.writer;
 
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import me.jellysquid.mods.sodium.client.model.vertex.fallback.VertexWriterFallback;
 import me.jellysquid.mods.sodium.client.model.vertex.formats.glyph.GlyphVertexSink;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 public class GlyphVertexWriterFallback extends VertexWriterFallback implements GlyphVertexSink {
     public GlyphVertexWriterFallback(IVertexBuilder consumer) {

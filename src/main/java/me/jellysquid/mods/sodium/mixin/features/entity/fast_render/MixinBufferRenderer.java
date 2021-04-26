@@ -2,8 +2,8 @@ package me.jellysquid.mods.sodium.mixin.features.entity.fast_render;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import me.jellysquid.mods.sodium.client.gl.buffer.GlMutableBuffer;
-import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
+import net.minecraft.client.renderer.vertex.VertexFormat;
 import org.lwjgl.opengl.GL15;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;

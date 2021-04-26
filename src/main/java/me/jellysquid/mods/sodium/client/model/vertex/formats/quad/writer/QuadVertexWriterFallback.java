@@ -1,10 +1,10 @@
 package me.jellysquid.mods.sodium.client.model.vertex.formats.quad.writer;
 
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import me.jellysquid.mods.sodium.client.model.vertex.fallback.VertexWriterFallback;
 import me.jellysquid.mods.sodium.client.model.vertex.formats.quad.QuadVertexSink;
 import me.jellysquid.mods.sodium.client.util.Norm3b;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 public class QuadVertexWriterFallback extends VertexWriterFallback implements QuadVertexSink {
     public QuadVertexWriterFallback(IVertexBuilder consumer) {

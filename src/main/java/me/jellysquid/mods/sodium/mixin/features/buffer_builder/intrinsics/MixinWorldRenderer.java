@@ -1,14 +1,14 @@
 package me.jellysquid.mods.sodium.mixin.features.buffer_builder.intrinsics;
 
-import me.jellysquid.mods.sodium.client.model.vertex.DefaultVertexSinks;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import me.jellysquid.mods.sodium.client.model.vertex.DefaultVertexTypes;
 import me.jellysquid.mods.sodium.client.model.vertex.VertexDrain;
 import me.jellysquid.mods.sodium.client.model.vertex.formats.line.LineVertexSink;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import me.jellysquid.mods.sodium.client.util.math.Matrix4fExtended;
 import me.jellysquid.mods.sodium.client.util.math.MatrixUtil;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.renderer.WorldRenderer;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.util.math.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -69,7 +69,7 @@ public class MixinWorldRenderer {
         float v8z = matrixExt.transformVecZ(x2f, y2f, z2f);
 
         LineVertexSink lines = VertexDrain.of(vertexConsumer)
-                .createSink(DefaultVertexSinks.LINES);
+                .createSink(DefaultVertexTypes.LINES);
         lines.ensureCapacity(24);
 
         lines.vertexLine(v1x, v1y, v1z, red, yAxisGreen, zAxisBlue, alpha);

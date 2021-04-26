@@ -1,8 +1,10 @@
 package me.jellysquid.mods.sodium.mixin.core.pipeline;
 
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import me.jellysquid.mods.sodium.client.model.vertex.VertexDrain;
 import me.jellysquid.mods.sodium.client.model.vertex.VertexSink;
-import me.jellysquid.mods.sodium.client.model.vertex.VertexSinkFactory;
+import me.jellysquid.mods.sodium.client.model.vertex.VertexType;
+import me.jellysquid.mods.sodium.client.model.vertex.VertexTypeBlittable;
 import me.jellysquid.mods.sodium.client.model.vertex.buffer.VertexBufferView;
 import me.jellysquid.mods.sodium.client.util.UnsafeUtil;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -40,12 +42,12 @@ public abstract class MixinBufferBuilder implements VertexBufferView, VertexDrai
     private int vertexCount;
 
     @Override
-    public boolean ensureBufferCapacity(int size) {
-        if (this.nextElementBytes + size <= ((Buffer)this.byteBuffer).capacity()) {
+    public boolean ensureBufferCapacity(int bytes) {
+        if (this.nextElementBytes + bytes <= ((Buffer)this.byteBuffer).capacity()) {
             return false;
         }
 
-        int newSize = ((Buffer)this.byteBuffer).capacity() + roundUpPositive(size);
+        int newSize = ((Buffer)this.byteBuffer).capacity() + roundUpPositive(bytes);
 
         LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", ((Buffer)this.byteBuffer).capacity(), newSize);
 
@@ -66,7 +68,7 @@ public abstract class MixinBufferBuilder implements VertexBufferView, VertexDrai
     }
 
     @Override
-    public int getElementOffset() {
+    public int getWriterPosition() {
         return this.nextElementBytes;
     }
 
@@ -86,7 +88,13 @@ public abstract class MixinBufferBuilder implements VertexBufferView, VertexDrai
     }
 
     @Override
-    public <T extends VertexSink> T createSink(VertexSinkFactory<T> factory) {
-        return factory.createBufferWriter(this, UnsafeUtil.isAvailable());
+    public <T extends VertexSink> T createSink(VertexType<T> factory) {
+        VertexTypeBlittable<T> blittable = factory.asBlittable();
+
+        if (blittable != null && blittable.getBufferVertexFormat() == this.vertexFormat)  {
+            return blittable.createBufferWriter(this, UnsafeUtil.isAvailable());
+        }
+
+        return factory.createFallbackWriter((IVertexBuilder) this);
     }
 }

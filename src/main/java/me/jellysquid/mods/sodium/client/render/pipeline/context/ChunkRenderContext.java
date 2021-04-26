@@ -7,13 +7,13 @@ import me.jellysquid.mods.sodium.client.model.quad.sink.ModelQuadSinkDelegate;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
 import me.jellysquid.mods.sodium.client.render.pipeline.FluidRenderer;
 import me.jellysquid.mods.sodium.client.render.pipeline.RenderContextCommon;
-import net.minecraft.util.math.SectionPos;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.SectionPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.model.data.IModelData;
 

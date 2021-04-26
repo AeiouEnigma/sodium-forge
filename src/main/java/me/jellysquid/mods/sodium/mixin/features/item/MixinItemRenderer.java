@@ -2,10 +2,10 @@ package me.jellysquid.mods.sodium.mixin.features.item;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
-import me.jellysquid.mods.sodium.client.model.vertex.DefaultVertexSinks;
+import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
+import me.jellysquid.mods.sodium.client.model.vertex.DefaultVertexTypes;
 import me.jellysquid.mods.sodium.client.model.vertex.VertexDrain;
 import me.jellysquid.mods.sodium.client.model.vertex.formats.quad.QuadVertexSink;
-import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import me.jellysquid.mods.sodium.client.util.ModelQuadUtil;
 import me.jellysquid.mods.sodium.client.util.color.ColorARGB;
@@ -68,7 +68,7 @@ public class MixinItemRenderer {
         IItemColor colorProvider = null;
 
         QuadVertexSink drain = VertexDrain.of(vertexConsumer)
-                .createSink(DefaultVertexSinks.QUADS);
+                .createSink(DefaultVertexTypes.QUADS);
         drain.ensureCapacity(quads.size() * 4);
 
         for (BakedQuad bakedQuad : quads) {

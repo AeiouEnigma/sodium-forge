@@ -140,6 +140,8 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
 
         this.loadedChunkPositions.clear();
         this.globalBlockEntities.clear();
+
+        this.world = null;
     }
 
     /**
