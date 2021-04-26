@@ -80,7 +80,7 @@ public class BlockRenderer {
         List<BakedQuad> all = model.getQuads(state, null, this.random, modelData);
 
         if (!all.isEmpty()) {
-            this.renderQuadList(world, state, pos, lighter, offset, buffers, all, ModelQuadFacing.NONE);
+            this.renderQuadList(world, state, pos, lighter, offset, buffers, all, ModelQuadFacing.UNASSIGNED);
 
             rendered = true;
         }
