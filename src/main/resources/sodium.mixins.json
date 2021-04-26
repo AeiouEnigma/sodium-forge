@@ -147,6 +147,7 @@
     "core.model.MixinBlockColors",
     "core.model.MixinItemColors",
     "core.pipeline.MixinBakedQuad",
+    "core.pipeline.MixinBufferBuilder",
     "core.pipeline.MixinVertexConsumer",
     "features.block.MixinBlockModelRenderer",
     "features.block.MixinBufferBuilder",
