@@ -26,7 +26,7 @@ public class SodiumConfig {
         this.addMixinRule("ai", true);
         this.addMixinRule("ai.goal", true);
         this.addMixinRule("ai.nearby_entity_tracking", true);
-        this.addMixinRule("ai.nearby_entity_tracking.goals", false); //KEEP DISABLED, causes crash on startup
+        this.addMixinRule("ai.nearby_entity_tracking.goals", true);
         this.addMixinRule("ai.pathing", true);
         this.addMixinRule("ai.poi", true);
         this.addMixinRule("ai.poi.fast_portals", false); //KEEP DISABLED, causes crash when going through nether portals

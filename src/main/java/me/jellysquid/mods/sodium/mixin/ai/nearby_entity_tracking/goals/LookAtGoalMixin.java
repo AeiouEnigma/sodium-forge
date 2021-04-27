@@ -8,6 +8,7 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.IEntityReader;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,18 +21,30 @@ public class LookAtGoalMixin {
     private NearbyEntityTracker<? extends LivingEntity> tracker;
 
     @Inject(method = "<init>(Lnet/minecraft/entity/MobEntity;Ljava/lang/Class;FF)V", at = @At("RETURN"))
-    private void init(MobEntity mob, Class<? extends LivingEntity> targetType, float range, float chance, CallbackInfo ci) {
-        this.tracker = new NearbyEntityTracker<>(targetType, mob, range);
+    private void init(MobEntity entityIn, Class<? extends LivingEntity> watchTargetClass, float maxDistance, float chanceIn, CallbackInfo ci) {
+        this.tracker = new NearbyEntityTracker<>(watchTargetClass, entityIn, maxDistance);
 
-        ((NearbyEntityListenerProvider) mob).getListener().addListener(this.tracker);
+        ((NearbyEntityListenerProvider) entityIn).getListener().addListener(this.tracker);
     }
 
-    @Redirect(method = "shouldExecute", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;func_225318_b(Ljava/lang/Class;Lnet/minecraft/entity/EntityPredicate;Lnet/minecraft/entity/LivingEntity;DDDLnet/minecraft/util/math/AxisAlignedBB;)Lnet/minecraft/entity/LivingEntity;"))
+    @Redirect(
+            method = "shouldExecute",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/World;getClosestEntity(Ljava/lang/Class;Lnet/minecraft/entity/EntityPredicate;Lnet/minecraft/entity/LivingEntity;DDDLnet/minecraft/util/math/AxisAlignedBB;)Lnet/minecraft/entity/LivingEntity;"
+            )
+    )
     private <T extends LivingEntity> LivingEntity redirectGetClosestEntity(World world, Class<? extends T> entityClass, EntityPredicate targetPredicate, LivingEntity entity, double x, double y, double z, AxisAlignedBB box) {
         return this.tracker.getClosestEntity(box, targetPredicate);
     }
 
-    @Redirect(method = "shouldExecute", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getClosestPlayer(Lnet/minecraft/entity/EntityPredicate;Lnet/minecraft/entity/LivingEntity;DDD)Lnet/minecraft/entity/player/PlayerEntity;"))
+    @Redirect(
+            method = "shouldExecute",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/World;getClosestPlayer(Lnet/minecraft/entity/EntityPredicate;Lnet/minecraft/entity/LivingEntity;DDD)Lnet/minecraft/entity/player/PlayerEntity;"
+            )
+    )
     private PlayerEntity redirectGetClosestPlayer(World world, EntityPredicate targetPredicate, LivingEntity entity, double x, double y, double z) {
         return (PlayerEntity) this.tracker.getClosestEntity(null, targetPredicate);
     }
