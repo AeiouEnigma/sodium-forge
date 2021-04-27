@@ -67,7 +67,6 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
     private final Long2ObjectOpenHashMap<ChunkRenderColumn<T>> columns = new Long2ObjectOpenHashMap<>();
     private final IdTable<ChunkRenderContainer<T>> renders = new IdTable<>(16384);
 
-    private final ObjectArrayFIFOQueue<ChunkRenderContainer<T>> iterationQueue = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayFIFOQueue<ChunkRenderContainer<T>> importantRebuildQueue = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayFIFOQueue<ChunkRenderContainer<T>> rebuildQueue = new ObjectArrayFIFOQueue<>();
 
@@ -92,7 +91,6 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
     private double fogRenderCutoff;
 
     public ChunkRenderManager(SodiumWorldRenderer renderer, ChunkRenderBackend<T> backend, BlockRenderPassManager renderPassManager, ClientWorld world, int renderDistance) {
-
         this.backend = backend;
         this.renderer = renderer;
         this.world = world;
@@ -486,18 +484,20 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
     }
 
     public void scheduleRebuild(int x, int y, int z, boolean important) {
-        if (y < 0 || y >= 16) {
-            return;
-        }
-
         ChunkRenderContainer<T> render = this.getRender(x, y, z);
 
         if (render != null) {
             // Nearby chunks are always rendered immediately
             important = important || this.isChunkPrioritized(render);
 
-            // Only enqueue chunks for updates during the next frame if it is visible and wasn't already dirty
-            if (render.scheduleRebuild(important) && this.culler.isSectionVisible(x, y, z)) {
+            // Only enqueue chunks for updates if they aren't already enqueued for an update
+            //
+            // We should avoid rebuilding chunks that aren't visible by using data from the occlusion culler, however
+            // that is not currently feasible because occlusion culling data is only ever updated when chunks are
+            // rebuilt. Computation of occlusion data needs to be isolated from chunk rebuilds for that to be feasible.
+            //
+            // TODO: Avoid rebuilding chunks that aren't visible to the player
+            if (render.scheduleRebuild(important)) {
                 (render.needsImportantRebuild() ? this.importantRebuildQueue : this.rebuildQueue)
                         .enqueue(render);
             }

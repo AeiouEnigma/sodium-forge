@@ -25,8 +25,8 @@ import me.jellysquid.mods.sodium.client.render.chunk.multidraw.ChunkRenderBacken
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
 import me.jellysquid.mods.sodium.client.render.chunk.region.ChunkRegion;
 import me.jellysquid.mods.sodium.client.render.chunk.region.ChunkRegionManager;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.Util;
+import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;

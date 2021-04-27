@@ -11,7 +11,6 @@ import java.nio.ByteBuffer;
  * parameters.
  */
 public abstract class ChunkDrawParamsVector extends StructBuffer {
-
     protected int capacity;
     protected int count;
 

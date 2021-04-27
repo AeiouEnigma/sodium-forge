@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
-import me.jellysquid.mods.sodium.client.gl.util.GlFogHelper;
 import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
 import me.jellysquid.mods.sodium.client.model.vertex.type.ChunkVertexType;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderBackend;
@@ -235,12 +234,6 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
         BlockRenderPass pass = this.renderPassManager.getRenderPassForLayer(renderLayer);
         pass.startDrawing();
 
-        // We don't have a great way to check if underwater fog is being used, so assume that terrain will only ever
-        // use linear fog. This will not disable fog in the Nether.
-        if (!SodiumClientMod.options().quality.enableFog && GlFogHelper.isFogLinear()) {
-            RenderSystem.disableFog();
-        }
-
         this.chunkRenderManager.renderLayer(matrixStack, pass, x, y, z);
 
         pass.endDrawing();
@@ -289,7 +282,7 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
     }
 
     private static ChunkRenderBackend<?> createChunkRenderBackend(SodiumGameOptions.ChunkRendererBackendOption opt,
-                                                           ChunkVertexType vertexFormat) {
+                                                                  ChunkVertexType vertexFormat) {
         boolean disableBlacklist = SodiumClientMod.options().advanced.disableDriverBlacklist;
 
         switch (opt) {
@@ -333,7 +326,7 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
 
                 if (stage >= 0) {
                     MatrixStack.Entry entry = matrices.getLast();
-                        IVertexBuilder transformer = new MatrixApplyingVertexBuilder(bufferBuilders.getCrumblingBufferSource().getBuffer(ModelBakery.DESTROY_RENDER_TYPES.get(stage)), entry.getMatrix(), entry.getNormal());
+                    IVertexBuilder transformer = new MatrixApplyingVertexBuilder(bufferBuilders.getCrumblingBufferSource().getBuffer(ModelBakery.DESTROY_RENDER_TYPES.get(stage)), entry.getMatrix(), entry.getNormal());
                     consumer = (layer) -> layer.isUseDelegate() ? VertexBuilderUtils.newDelegate(transformer, immediate.getBuffer(layer)) : immediate.getBuffer(layer);
                 }
             }
@@ -349,7 +342,7 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
             matrices.push();
             matrices.translate((double) pos.getX() - x, (double) pos.getY() - y, (double) pos.getZ() - z);
 
-            TileEntityRendererDispatcher.instance.renderTileEntity(blockEntity, tickDelta, matrices, immediate);
+        TileEntityRendererDispatcher.instance.renderTileEntity(blockEntity, tickDelta, matrices, immediate);
 
             matrices.pop();
         }

@@ -266,6 +266,9 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
                         state = prevPaletteState;
                     } else {
                         state = palette.get(paletteId);
+                        if (state == null) {
+                            state = container.defaultState;
+                        }
 
                         prevPaletteState = state;
                         prevPaletteId = paletteId;
