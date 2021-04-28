@@ -7,24 +7,13 @@
 ### This is Forge edition of Sodium/Lithium/Phosphor
 
 Sodium is a free and open-source optimization mod for the Minecraft client that improves frame rates, reduces
-micro-stutter, and fixes graphical issues in Minecraft. 
+micro-stutter, and fixes graphical issues in Minecraft.
 
-:warning: This fork uses outdated dev branch of original repo, though this fork is functional, stuff will be broken. 
+:warning: This fork is experimental. Though this fork is functional, stuff will be broken.
 
-This fork includes Lithium, as [original repo](https://github.com/CaffeineMC/lithium-fabric) says:
-
-* Lithium is a free and open-source Minecraft mod which works to optimize many areas of the game in order to provide
-  better overall performance. It works on both the **client and server**, and **doesn't require the mod to be installed
-  on both sides**. 
-  
-This fork includes Phosphor, as [original repo](https://github.com/CaffeineMC/phosphor-fabric) says:
-
- * Phosphor is a free and open-source Minecraft mod (under GNU GPLv3) aiming to save your CPU cycles and improve performance by optimizing one of Minecraft's most inefficient areas-- the lighting engine.
-   It works on **both the client and server**, and can be installed on servers **without requiring clients to also have the mod**
- * The mod is designed to be as minimal as possible in the changes it makes, and as such, does not modify the light model or interfaces of vanilla Minecraft. Because of this, Phosphor should be compatible with many Minecraft mods (so long as they do not make drastic changes to how the lighting engine works.) If you've ran into a compatibility problem, please open an issue!
 ### Downloads
 
-Currently, only on [release page](https://github.com/Pannoniae/sodium-forge/releases/latest/).
+Currently, only on [release page](https://github.com/AeiouEnigma/sodium-forge/releases/latest/).
 
 ### Community
 Please do not join Caffeine discord if you intend to get support about this fork. All forks or unofficial version 
