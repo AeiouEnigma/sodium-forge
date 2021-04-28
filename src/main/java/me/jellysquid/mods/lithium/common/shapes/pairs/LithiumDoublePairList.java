@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.util.math.shapes.IDoubleListMerger;
 
 /**
- * Optimized variant of {@link net.minecraft.util.shape.SimplePairList}. This implementation works directly against
+ * Optimized variant of {@link net.minecraft.util.math.shapes.IndirectMerger}. This implementation works directly against
  * flat arrays and tries to organize code in a manner that hits the JIT's happy path. In my testing, this is about
  * ~50% faster than the vanilla implementation.
  */

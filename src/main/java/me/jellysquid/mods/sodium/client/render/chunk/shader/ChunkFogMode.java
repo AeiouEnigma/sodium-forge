@@ -33,7 +33,7 @@ public enum ChunkFogMode {
      * Retrieves the current fog mode from the fixed-function pipeline.
      */
     public static ChunkFogMode getActiveMode() {
-        if (!GlFogHelper.isFogEnabled()) {
+        if (!GL11.glGetBoolean(GL11.GL_FOG)) {
             return ChunkFogMode.NONE;
         }
 

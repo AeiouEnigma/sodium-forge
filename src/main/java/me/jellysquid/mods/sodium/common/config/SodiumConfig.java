@@ -28,7 +28,7 @@ public class SodiumConfig {
         this.addMixinRule("ai.nearby_entity_tracking", true);
         this.addMixinRule("ai.nearby_entity_tracking.goals", true);
         this.addMixinRule("ai.pathing", true);
-        this.addMixinRule("ai.poi", true);
+        this.addMixinRule("ai.poi", false); /*TODO find and fix difference in portal order*/
         this.addMixinRule("ai.poi.fast_portals", false); //KEEP DISABLED, causes crash when going through nether portals
         this.addMixinRule("ai.raid", true);
         this.addMixinRule("ai.task", true);
@@ -83,6 +83,7 @@ public class SodiumConfig {
 
         this.addMixinRule("math", true);
         this.addMixinRule("math.fast_util", true);
+        this.addMixinRule("math.sine_lut", true);
 
         this.addMixinRule("shapes", true);
         this.addMixinRule("shapes.blockstate_cache", true);
