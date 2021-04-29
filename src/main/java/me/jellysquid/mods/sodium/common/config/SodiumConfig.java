@@ -38,7 +38,7 @@ public class SodiumConfig {
         this.addMixinRule("features.gui", true);
         this.addMixinRule("features.gui.fast_loading_screen", true);
         this.addMixinRule("features.gui.font", true);
-        this.addMixinRule("features.item", true); //Watch for issues relating to this, Pannoniae must've disabled it for a reason
+        this.addMixinRule("features.item", false); //Watch for issues relating to this, Pannoniae must've disabled it for a reason
         this.addMixinRule("features.matrix_stack", true);
         this.addMixinRule("features.model", true);
         this.addMixinRule("features.options", true);
