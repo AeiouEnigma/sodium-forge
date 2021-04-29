@@ -1,10 +1,10 @@
 ![Project icon](https://git-assets.jellysquid.me/hotlink-ok/sodium/icon-rounded-128px.png)
 
-# Sodium/Lithium/Phosphor (Forge fork)
+# Sodium (Forge fork)
 ![GitHub license](https://img.shields.io/github/license/jellysquid3/sodium-fabric.svg)
 ![GitHub tag](https://img.shields.io/github/tag/jellysquid3/sodium-fabric.svg)
 
-### This is Forge edition of Sodium/Lithium/Phosphor
+### This is Forge edition of Sodium
 
 Sodium is a free and open-source optimization mod for the Minecraft client that improves frame rates, reduces
 micro-stutter, and fixes graphical issues in Minecraft.
