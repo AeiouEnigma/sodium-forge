@@ -14,7 +14,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: "org.spongepowered.mixin"
 
-repositories {
+repositories {/*
     maven {
         // for Quark
         name "blamejared"
@@ -24,7 +24,7 @@ repositories {
         // for Mappings
         name "gigaherz"
         url "http://dogforce-games.com/maven/"
-    }
+    }*/
     maven {
         // for FTB Chunks
         name "LatvianModder"
@@ -33,7 +33,7 @@ repositories {
 }
 
 archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}"
-version ="${project.mod_version}-r${project.build_number}"
+version ="${project.mod_version}-build_${project.build_number}"
 group = project.maven_group
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
@@ -89,14 +89,14 @@ dependencies {
     // mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
 
-/*    compileOnly fg.deobf(project.dependencies.create("com.feed_the_beast.mods:ftb-chunks:${ftb_chunks_version}") {
+    compileOnly fg.deobf(project.dependencies.create("com.feed_the_beast.mods:ftb-chunks:${ftb_chunks_version}") {
         transitive = false
-    })
+    })/*
     compileOnly ("vazkii.autoreglib:AutoRegLib:1.6-48.88")
     compileOnly fg.deobf(project.dependencies.create("vazkii.quark:Quark:r2.4-310.1") {
         transitive = false
-    })
-*/}
+    })*/
+}
 
 // ensure that the encoding is set to UTF-8, no matter what the system default is
 // this fixes some edge cases with special characters not displaying correctly

@@ -1,6 +1,5 @@
 package me.jellysquid.mods.sodium.common.config;
 
-import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,9 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * Documentation of these options: https://github.com/jellysquid3/sodium-fabric/wiki/Configuration-File
- */
 @SuppressWarnings("CanBeFinal")
 public class SodiumConfig {
     private static final Logger LOGGER = LogManager.getLogger("SodiumConfig");
@@ -39,7 +35,7 @@ public class SodiumConfig {
         this.addMixinRule("features.gui", true);
         this.addMixinRule("features.gui.fast_loading_screen", true);
         this.addMixinRule("features.gui.font", true);
-        this.addMixinRule("features.item", !SodiumClientMod.quarkLoaded); //Incompatible with quark
+        this.addMixinRule("features.item", false); //Incompatible with quark
         this.addMixinRule("features.matrix_stack", true);
         this.addMixinRule("features.model", true);
         this.addMixinRule("features.options", true);
