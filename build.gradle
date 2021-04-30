@@ -1,8 +1,8 @@
 buildscript {
     repositories {
         maven { url = 'https://files.minecraftforge.net/maven' }
-        mavenCentral()
         maven {url='https://repo.spongepowered.org/maven'}
+        mavenCentral()
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
@@ -16,44 +16,45 @@ apply plugin: "org.spongepowered.mixin"
 
 repositories {
     maven {
+        // for Quark
+        name "blamejared"
+        url "https://maven.blamejared.com/"
+    }
+    maven {
+        // for Mappings
+        name "gigaherz"
+        url "http://dogforce-games.com/maven/"
+    }
+    maven {
+        // for FTB Chunks
         name "LatvianModder"
-        url "https://maven.latmod.com"
+        url "https://maven.latmod.com/"
     }
 }
 
-mixin {
-    add sourceSets.main, "${project.mod_id}.refmap.json"
-}
-
 archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}"
-version = mod_version
+version ="${project.mod_version}-r${project.build_number}"
 group = project.maven_group
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
+
 minecraft {
-    mappings channel: project.mappings_channel, version: project.mappings_version
+    mappings channel: "${project.mappings_channel}", version: "${project.mappings_version}"
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
     runs {
         client {
             workingDirectory project.file('run')
-            arg "-mixin.config=sodium.mixins.json"
+            arg "-mixin.config=" + project.mod_id + ".mixins.json"
 
             // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
-            mods {
-                examplemod {
-                    source sourceSets.main
-                }
-            }
         }
 
         server {
@@ -65,12 +66,6 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
-            mods {
-                examplemod {
-                    source sourceSets.main
-                }
-            }
         }
 
         data {
@@ -81,46 +76,27 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
-            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/')
-
-            mods {
-                examplemod {
-                    source sourceSets.main
-                }
-            }
         }
     }
 }
 
+mixin {
+    add sourceSets.main, "${project.mod_id}.refmap.json"
+}
+
 dependencies {
-    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
-    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
-    // The userdev artifact is a special name and will get all sorts of transformations applied to it.  
     minecraft 'net.minecraftforge:forge:' + project.minecraft_version + '-' + project.forge_version
     // mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
 
-    // You may put jars on which you depend on in ./libs or you may define them like so..
-    // compile "some.group:artifact:version:classifier"
-    // compile "some.group:artifact:version"
-
-    // Real examples
-    // compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-    // compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-    // The 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
-    // provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // These dependencies get remapped to your current MCP mappings
-    // deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // For more info...
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
-    compileOnly fg.deobf(project.dependencies.create("com.feed_the_beast.mods:ftb-chunks:${ftb_chunks_version}") {
+/*    compileOnly fg.deobf(project.dependencies.create("com.feed_the_beast.mods:ftb-chunks:${ftb_chunks_version}") {
         transitive = false
     })
-}
+    compileOnly ("vazkii.autoreglib:AutoRegLib:1.6-48.88")
+    compileOnly fg.deobf(project.dependencies.create("vazkii.quark:Quark:r2.4-310.1") {
+        transitive = false
+    })
+*/}
 
 // ensure that the encoding is set to UTF-8, no matter what the system default is
 // this fixes some edge cases with special characters not displaying correctly
@@ -139,14 +115,14 @@ afterEvaluate {
 jar {
     manifest {
         attributes([
-            "Specification-Title": "sodium",
+            "Specification-Title": "${project.mod_id}",
             //"Specification-Vendor": "examplemodsareus",
             "Specification-Version": "1", // We are version 1 of ourselves
-            "Implementation-Title": project.name,
-            "Implementation-Version": "${archiveVersion}",
+            "Implementation-Title": "${project.name}",
+            "Implementation-Version": "${version}",
             //"Implementation-Vendor" :"examplemodsareus",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": project.mod_id + ".mixins.json"
+            "MixinConfigs": "${project.mod_id}.mixins.json"
         ])
     }
 }

@@ -14,8 +14,10 @@ public class SodiumClientMod {
     private static SodiumGameOptions CONFIG;
     private static Logger LOGGER;
     public static boolean ftbChunksLoaded;
+    public static boolean quarkLoaded;
     public SodiumClientMod() {
         ftbChunksLoaded = ModList.get().isLoaded("ftbchunks");
+        quarkLoaded = ModList.get().isLoaded("quark");
         // Register the setup method for modloading
         //FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
     }
@@ -49,4 +51,5 @@ public class SodiumClientMod {
     public static void onConfigChanged(SodiumGameOptions options) {
         UnsafeUtil.setEnabled(options.advanced.useMemoryIntrinsics);
     }
+
 }

@@ -62,12 +62,13 @@ public class MixinItemRenderer {
      * @author JellySquid
      */
     @Overwrite
-    public void renderQuads(MatrixStack matrices, IVertexBuilder vertexConsumer, List<BakedQuad> quads, ItemStack stack, int light, int overlay) {
-        MatrixStack.Entry entry = matrices.getLast();
+    public void renderQuads(MatrixStack ms, IVertexBuilder builder, List<BakedQuad> quads, ItemStack stack, int lightmap, int overlay) {
+
+        MatrixStack.Entry entry = ms.getLast();
 
         IItemColor colorProvider = null;
 
-        QuadVertexSink drain = VertexDrain.of(vertexConsumer)
+        QuadVertexSink drain = VertexDrain.of(builder)
                 .createSink(VanillaVertexTypes.QUADS);
         drain.ensureCapacity(quads.size() * 4);
 
@@ -86,7 +87,7 @@ public class MixinItemRenderer {
 
             for (int i = 0; i < 4; i++) {
                 drain.writeQuad(entry, quad.getX(i), quad.getY(i), quad.getZ(i), color, quad.getTexU(i), quad.getTexV(i),
-                        light, overlay, ModelQuadUtil.getFacingNormal(bakedQuad.getFace()));
+                        lightmap, overlay, ModelQuadUtil.getFacingNormal(bakedQuad.getFace()));
             }
 
             SpriteUtil.markSpriteActive(quad.getSprite());
