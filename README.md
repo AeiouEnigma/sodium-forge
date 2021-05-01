@@ -1,24 +1,22 @@
-![Project icon](https://git-assets.jellysquid.me/hotlink-ok/sodium/icon-rounded-128px.png)
+![Project icon](https://github.com/AeiouEnigma/sodium-forge/blob/1.16.x/dev/src/main/resources/icon.png)
 
 # Sodium (Forge fork)
-![GitHub license](https://img.shields.io/github/license/jellysquid3/sodium-fabric.svg)
-![GitHub tag](https://img.shields.io/github/tag/jellysquid3/sodium-fabric.svg)
+![GitHub license](https://img.shields.io/github/license/AeiouEnigma/sodium-forge.svg)
 
 ### This is Forge edition of Sodium
 
-Sodium is a free and open-source optimization mod for the Minecraft client that improves frame rates, reduces
-micro-stutter, and fixes graphical issues in Minecraft.
+Sodium is a free and open-source optimization mod for the Minecraft client that improves frame rates, reduces micro-stutter, and fixes graphical issues in Minecraft.
 
-:warning: This fork is experimental. Though this fork is functional, stuff will be broken.
+:warning: Though this fork is functional, things may be broken.
 
 ### Downloads
 
 Currently, only on [release page](https://github.com/AeiouEnigma/sodium-forge/releases/latest/).
 
 ### Community
-Please do not join Caffeine discord if you intend to get support about this fork. All forks or unofficial version 
-of sodium/phosphor/lithium are not support by original authors, if you encounter any issues, check current issues on this repo or 
-make a new issue. 
+Please **DO NOT** join CaffeineMC's Discord to seek support for this fork. Forks or unofficial versions
+of Sodium/Lithium/Phosphor are not supported by the original developers. If you encounter any issues, check current issues on this repo or
+make a new issue.
 
 ### Building from source
 
