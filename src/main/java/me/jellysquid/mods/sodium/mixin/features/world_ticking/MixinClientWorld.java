@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Random;
 import java.util.function.Supplier;
 
-@Mixin(value = ClientWorld.class, priority = 999)
+@Mixin(ClientWorld.class)
 public abstract class MixinClientWorld extends World {
     @Shadow
     protected abstract void spawnFluidParticle(BlockPos pos, BlockState state, IParticleData parameters, boolean bl);
