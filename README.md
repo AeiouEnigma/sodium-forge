@@ -15,7 +15,7 @@ Currently, only on [release page](https://github.com/AeiouEnigma/sodium-forge/re
 
 ### Community
 Please **DO NOT** join CaffeineMC's Discord to seek support for this fork. Forks or unofficial versions
-of Sodium/Lithium/Phosphor are not supported by the original developers. If you encounter any issues, check current issues on this repo or
+of Sodium are not supported by the original developers. If you encounter any issues, check current issues on this repo or
 make a new issue.
 
 ### Building from source
