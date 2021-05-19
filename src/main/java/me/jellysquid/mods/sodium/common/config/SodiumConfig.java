@@ -1,5 +1,6 @@
 package me.jellysquid.mods.sodium.common.config;
 
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,7 +36,7 @@ public class SodiumConfig {
         this.addMixinRule("features.gui", true);
         this.addMixinRule("features.gui.fast_loading_screen", true);
         this.addMixinRule("features.gui.font", true);
-        this.addMixinRule("features.item", false); //Incompatible with quark
+        this.addMixinRule("features.item", true);
         this.addMixinRule("features.matrix_stack", true);
         this.addMixinRule("features.model", true);
         this.addMixinRule("features.options", true);
@@ -45,6 +46,35 @@ public class SodiumConfig {
         this.addMixinRule("features.render_layer", true);
         this.addMixinRule("features.texture_tracking", true);
         this.addMixinRule("features.world_ticking", true);
+
+        this.applyOverridesForModConflicts();
+    }
+
+    private void applyOverridesForModConflicts() {
+        // Array of modIds for which to disable Sodium mixins
+        final String[] modOverrideList = {
+                "abnormals_core",
+                "quark"
+        };
+
+        // Array of mixin rules to disable for each of the above modIds
+        final String[][] rulesToOverride = {
+                /* ABNORMALS CORE */
+                {"features.world_ticking"},
+
+                /* QUARK */
+                {"features.item"}
+        };
+
+        // For each of the above modIds that's loaded, override the corresponding mixin rules
+        for (int i = 0; i < modOverrideList.length; i++) {
+            if(FMLLoader.getLoadingModList().getModFileById(modOverrideList[i]) != null) {
+                for (String rule : rulesToOverride[i]) {
+                    this.options.get(getMixinRuleName(rule))
+                            .addModOverride(false, modOverrideList[i]);
+                }
+            }
+        }
     }
 
     /**
