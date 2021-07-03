@@ -14,17 +14,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: "org.spongepowered.mixin"
 
-repositories {/*
-    maven {
-        // for Quark
-        name "blamejared"
-        url "https://maven.blamejared.com/"
-    }
-    maven {
-        // for Mappings
-        name "gigaherz"
-        url "http://dogforce-games.com/maven/"
-    }*/
+repositories {
     maven {
         // for FTB Chunks
         name "LatvianModder"
@@ -91,11 +81,7 @@ dependencies {
 
     compileOnly fg.deobf(project.dependencies.create("com.feed_the_beast.mods:ftb-chunks:${ftb_chunks_version}") {
         transitive = false
-    })/*
-    compileOnly ("vazkii.autoreglib:AutoRegLib:1.6-48.88")
-    compileOnly fg.deobf(project.dependencies.create("vazkii.quark:Quark:r2.4-310.1") {
-        transitive = false
-    })*/
+    })
 }
 
 // ensure that the encoding is set to UTF-8, no matter what the system default is
