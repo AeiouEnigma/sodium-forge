@@ -89,7 +89,7 @@ public class SodiumOptionsGUI extends Screen {
         this.closeButton = new FlatButtonWidget(new Dim2i(this.width - 73, this.height - 26, 65, 20),
                 I18n.format("sodium.options.buttons.close"), this::closeScreen);
         this.donateButton = new FlatButtonWidget(new Dim2i(this.width - 136, 6, 108, 20),
-                "Support CaffeineMC!", this::openDonationPage);
+                "Support CaffeineMC", this::openDonationPage);
         this.hideDonateButton = new FlatButtonWidget(new Dim2i(this.width - 26, 6, 20, 20),
                 "x", this::hideDonationButton);
 
