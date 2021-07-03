@@ -1,5 +1,4 @@
 #version 110
-
 attribute vec3 a_Pos; // The position of the vertex
 attribute vec4 a_Color; // The color of the vertex
 attribute vec2 a_TexCoord; // The block texture coordinate of the vertex
@@ -18,12 +17,7 @@ uniform vec3 u_ModelScale;
 uniform vec2 u_TextureScale;
 
 // The model translation for this draw call.
-// If multi-draw is enabled, then the model offset will come from an attribute buffer.
-#ifdef USE_MULTIDRAW
 attribute vec4 d_ModelOffset;
-#else
-uniform vec4 d_ModelOffset;
-#endif
 
 void main() {
     // Translates the vertex position around the position of the camera

@@ -1,6 +1,6 @@
 package me.jellysquid.mods.sodium.client.gl.util;
 
-import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL20C;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.Buffer;
@@ -8,7 +8,7 @@ import java.nio.IntBuffer;
 
 /**
  * Provides a fixed-size queue for batching draw calls for vertex data in the same buffer. This internally
- * uses {@link GL14#glMultiDrawArrays(int, IntBuffer, IntBuffer)} and should be compatible on any relevant platform.
+ * uses {@link GL20C#glMultiDrawArrays(int, IntBuffer, IntBuffer)} and should be compatible on any relevant platform.
  */
 public class GlMultiDrawBatch {
     private final IntBuffer bufIndices;

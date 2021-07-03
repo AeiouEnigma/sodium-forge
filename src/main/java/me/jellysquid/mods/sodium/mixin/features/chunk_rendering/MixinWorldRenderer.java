@@ -2,6 +2,7 @@ package me.jellysquid.mods.sodium.mixin.features.chunk_rendering;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import me.jellysquid.mods.sodium.client.gl.device.RenderDevice;
 import me.jellysquid.mods.sodium.client.render.SodiumWorldRenderer;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
@@ -46,7 +47,13 @@ public abstract class MixinWorldRenderer {
 
     @Inject(method = "setWorldAndLoadRenderers", at = @At("RETURN"))
     private void onWorldChanged(ClientWorld world, CallbackInfo ci) {
-        this.renderer.setWorld(world);
+        RenderDevice.enterManagedCode();
+
+        try {
+            this.renderer.setWorld(world);
+        } finally {
+            RenderDevice.exitManagedCode();
+        }
     }
 
     /**
@@ -78,7 +85,13 @@ public abstract class MixinWorldRenderer {
      */
     @Overwrite
     private void renderBlockLayer(RenderType renderLayer, MatrixStack matrixStack, double x, double y, double z) {
-        this.renderer.drawChunkLayer(renderLayer, matrixStack, x, y, z);
+        RenderDevice.enterManagedCode();
+
+        try {
+            this.renderer.drawChunkLayer(renderLayer, matrixStack, x, y, z);
+        } finally {
+            RenderDevice.exitManagedCode();
+        }
     }
 
     /**
@@ -87,7 +100,13 @@ public abstract class MixinWorldRenderer {
      */
     @Overwrite
     private void setupTerrain(ActiveRenderInfo camera, ClippingHelper frustum, boolean hasForcedFrustum, int frame, boolean spectator) {
-        this.renderer.updateChunks(camera, frustum, hasForcedFrustum, frame, spectator);
+        RenderDevice.enterManagedCode();
+
+        try {
+            this.renderer.updateChunks(camera, frustum, hasForcedFrustum, frame, spectator);
+        } finally {
+            RenderDevice.exitManagedCode();
+        }
     }
 
     /**
@@ -128,7 +147,13 @@ public abstract class MixinWorldRenderer {
 
     @Inject(method = "loadRenderers", at = @At("RETURN"))
     private void onReload(CallbackInfo ci) {
-        this.renderer.reload();
+        RenderDevice.enterManagedCode();
+
+        try {
+            this.renderer.reload();
+        } finally {
+            RenderDevice.exitManagedCode();
+        }
     }
 
     @Inject(method = "updateCameraAndRender", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/WorldRenderer;setTileEntities:Ljava/util/Set;", shift = At.Shift.BEFORE, ordinal = 0))

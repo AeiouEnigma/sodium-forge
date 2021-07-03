@@ -5,9 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import me.jellysquid.mods.sodium.client.gui.options.TextProvider;
-import me.jellysquid.mods.sodium.client.render.chunk.backends.gl20.GL20ChunkRenderBackend;
-import me.jellysquid.mods.sodium.client.render.chunk.backends.gl30.GL30ChunkRenderBackend;
-import me.jellysquid.mods.sodium.client.render.chunk.backends.gl43.GL43ChunkRenderBackend;
+import me.jellysquid.mods.sodium.client.render.chunk.backends.multidraw.MultidrawChunkRenderBackend;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.GraphicsFanciness;
 
@@ -31,7 +29,9 @@ public class SodiumGameOptions {
     }
 
     public static class AdvancedSettings {
-        public ChunkRendererBackendOption chunkRendererBackend = ChunkRendererBackendOption.BEST;
+        public boolean useVertexArrays = true;
+        public boolean useMultidraw = true;
+
         public boolean animateOnlyVisibleTextures = true;
         public boolean useAdvancedEntityCulling = true;
         public boolean useParticleCulling = true;
@@ -51,51 +51,6 @@ public class SodiumGameOptions {
         public boolean enableClouds = true;
 
         public LightingQuality smoothLighting = LightingQuality.HIGH;
-    }
-
-    public enum ChunkRendererBackendOption implements TextProvider {
-        GL43("Multidraw (GL 4.3)", GL43ChunkRenderBackend::isSupported),
-        GL30("Oneshot (GL 3.0)", GL30ChunkRenderBackend::isSupported),
-        GL20("Oneshot (GL 2.0)", GL20ChunkRenderBackend::isSupported);
-
-        public static final ChunkRendererBackendOption BEST = pickBestBackend();
-
-        private final String name;
-        private final SupportCheck supportedFunc;
-
-        ChunkRendererBackendOption(String name, SupportCheck supportedFunc) {
-            this.name = name;
-            this.supportedFunc = supportedFunc;
-        }
-
-        @Override
-        public String getLocalizedName() {
-            return this.name;
-        }
-
-        public boolean isSupported(boolean disableBlacklist) {
-            return this.supportedFunc.isSupported(disableBlacklist);
-        }
-
-        public static ChunkRendererBackendOption[] getAvailableOptions(boolean disableBlacklist) {
-            return streamAvailableOptions(disableBlacklist)
-                    .toArray(ChunkRendererBackendOption[]::new);
-        }
-
-        public static Stream<ChunkRendererBackendOption> streamAvailableOptions(boolean disableBlacklist) {
-            return Arrays.stream(ChunkRendererBackendOption.values())
-                    .filter((o) -> o.isSupported(disableBlacklist));
-        }
-
-        private static ChunkRendererBackendOption pickBestBackend() {
-            return streamAvailableOptions(false)
-                    .findFirst()
-                    .orElseThrow(IllegalStateException::new);
-        }
-
-        private interface SupportCheck {
-            boolean isSupported(boolean disableBlacklist);
-        }
     }
 
     public enum GraphicsQuality implements TextProvider {
@@ -151,8 +106,6 @@ public class SodiumGameOptions {
             } catch (IOException e) {
                 throw new RuntimeException("Could not parse config", e);
             }
-
-            config.sanitize();
         } else {
             config = new SodiumGameOptions();
         }
@@ -166,12 +119,6 @@ public class SodiumGameOptions {
         }
 
         return config;
-    }
-
-    private void sanitize() {
-        if (this.advanced.chunkRendererBackend == null) {
-            this.advanced.chunkRendererBackend = ChunkRendererBackendOption.BEST;
-        }
     }
 
     public void writeChanges() throws IOException {
