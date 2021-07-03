@@ -1,5 +1,6 @@
 package me.jellysquid.mods.sodium.client.gui;
 
+import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import me.jellysquid.mods.sodium.client.gui.options.*;
 import me.jellysquid.mods.sodium.client.gui.options.control.Control;
@@ -15,8 +16,10 @@ import net.minecraft.client.gui.screen.VideoSettingsScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.text.*;
+import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -34,6 +37,8 @@ public class SodiumOptionsGUI extends Screen {
     private OptionPage currentPage;
 
     private FlatButtonWidget applyButton, closeButton, undoButton;
+    private FlatButtonWidget donateButton, hideDonateButton;
+
     private boolean hasPendingChanges;
     private ControlElement<?> hoveredElement;
 
@@ -83,16 +88,44 @@ public class SodiumOptionsGUI extends Screen {
                 I18n.format("sodium.options.buttons.apply"), this::applyChanges);
         this.closeButton = new FlatButtonWidget(new Dim2i(this.width - 73, this.height - 30, 65, 20),
                 I18n.format("sodium.options.buttons.close"), this::closeScreen);
+        this.donateButton = new FlatButtonWidget(new Dim2i(this.width - 128, 6, 100, 20),
+                "Buy us a coffee!", this::openDonationPage);
+        this.hideDonateButton = new FlatButtonWidget(new Dim2i(this.width - 26, 6, 20, 20),
+                "x", this::hideDonationButton);
+
+        if (SodiumClientMod.options().notifications.hideDonationButton) {
+            this.setDonationButtonVisibility(false);
+        }
 
         this.children.add(this.undoButton);
         this.children.add(this.applyButton);
         this.children.add(this.closeButton);
+        this.children.add(this.donateButton);
+        this.children.add(this.hideDonateButton);
 
         for (IGuiEventListener element : this.children) {
             if (element instanceof IRenderable) {
                 this.IRenderable.add((IRenderable) element);
             }
         }
+    }
+
+    private void setDonationButtonVisibility(boolean value) {
+        this.donateButton.setVisible(value);
+        this.hideDonateButton.setVisible(value);
+    }
+
+    private void hideDonationButton() {
+        SodiumGameOptions options = SodiumClientMod.options();
+        options.notifications.hideDonationButton = true;
+
+        try {
+            options.writeChanges();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save configuration", e);
+        }
+
+        this.setDonationButtonVisibility(false);
     }
 
     private void rebuildGUIPages() {
@@ -252,6 +285,11 @@ public class SodiumOptionsGUI extends Screen {
     private void undoChanges() {
         this.getAllOptions()
                 .forEach(Option::reset);
+    }
+
+    private void openDonationPage() {
+        Util.getOSType()
+                .openURI("https://caffeinemc.net/donate");
     }
 
     @Override
