@@ -82,7 +82,7 @@ public abstract class MixinClientChunkManager implements ChunkStatusListenerMana
 
     @Inject(method = "setViewDistance",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/world/ClientChunkProvider$ChunkArray;replace(ILnet/minecraft/world/chunk/Chunk;)V",
+                    target = "Lnet/minecraft/client/multiplayer/ClientChunkProvider$ChunkArray;replace(ILnet/minecraft/world/chunk/Chunk;)V",
                     shift = At.Shift.AFTER))
     private void afterLoadDistanceChanged(int loadDistance, CallbackInfo ci) {
         this.needsTrackingUpdate = true;
