@@ -34,7 +34,7 @@ public abstract class MixinDebugHud {
         strings.add("");
         strings.addAll(getChunkRendererDebugStrings());
 
-        if (SodiumClientMod.options().advanced.disableDriverBlacklist) {
+        if (SodiumClientMod.options().advanced.ignoreDriverBlacklist) {
             strings.add(TextFormatting.RED + "(!!) Driver blacklist ignored");
         }
 
