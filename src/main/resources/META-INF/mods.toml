@@ -23,15 +23,17 @@ displayName="Sodium (Forge)" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 #updateJSONURL="http://myurl.me/" #optional
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://jellysquid.me" #optional
+displayURL="https://github.com/AeiouEnigma/sodium-forge" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="icon.png" #optional
 # A text field displayed in the mod UI
-credits="Pannoniae, hanetzer, yatsukiko, AeiouEnigma" #optional
+credits="AeiouEnigma, Pannoniae, hanetzer, yatsukiko" #optional
 # A text field displayed in the mod UI
 authors="JellySquid" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Sodium is a free and open-source optimization mod for the Minecraft client that improves frame rates, reduces micro-stutter, and fixes graphical issues in Minecraft.
+
+This is an unofficial Forge port maintained by AeiouEnigma. Releases are posted on GitHub.
 '''
 side="CLIENT" #optional
