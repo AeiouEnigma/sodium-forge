@@ -22,7 +22,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderData;
 import me.jellysquid.mods.sodium.client.render.chunk.format.DefaultModelVertexFormats;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPassManager;
-import me.jellysquid.mods.sodium.client.render.pipeline.context.GlobalRenderContext;
+import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderCacheShared;
 import me.jellysquid.mods.sodium.client.util.math.FrustumExtended;
 import me.jellysquid.mods.sodium.client.world.ChunkStatusListener;
 import me.jellysquid.mods.sodium.client.world.ChunkStatusListenerManager;
@@ -117,7 +117,7 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
     private void loadWorld(ClientWorld world) {
         this.world = world;
 
-        GlobalRenderContext.createRenderContext(this.world);
+        ChunkRenderCacheShared.createRenderContext(this.world);
 
         this.initRenderer();
 
@@ -125,7 +125,7 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
     }
 
     private void unloadWorld() {
-        GlobalRenderContext.destroyRenderContext(this.world);
+        ChunkRenderCacheShared.destroyRenderContext(this.world);
 
         if (this.chunkRenderManager != null) {
             this.chunkRenderManager.destroy();
@@ -188,23 +188,20 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
             throw new IllegalStateException("Client instance has no active player entity");
         }
 
-        Vector3d cameraPos = camera.getProjectedView();
-
-        this.chunkRenderManager.setCameraPosition(cameraPos.x, cameraPos.y, cameraPos.z);
-
+        Vector3d pos = camera.getProjectedView();
         float pitch = camera.getPitch();
         float yaw = camera.getYaw();
 
-        boolean dirty = cameraPos.x != this.lastCameraX || cameraPos.y != this.lastCameraY || cameraPos.z != this.lastCameraZ ||
+        boolean dirty = pos.x != this.lastCameraX || pos.y != this.lastCameraY || pos.z != this.lastCameraZ ||
                 pitch != this.lastCameraPitch || yaw != this.lastCameraYaw;
 
         if (dirty) {
             this.chunkRenderManager.markDirty();
         }
 
-        this.lastCameraX = cameraPos.x;
-        this.lastCameraY = cameraPos.y;
-        this.lastCameraZ = cameraPos.z;
+        this.lastCameraX = pos.x;
+        this.lastCameraY = pos.y;
+        this.lastCameraZ = pos.z;
         this.lastCameraPitch = pitch;
         this.lastCameraYaw = yaw;
 

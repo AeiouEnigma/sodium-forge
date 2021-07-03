@@ -1,19 +1,19 @@
 package me.jellysquid.mods.sodium.client.world;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuilder;
+import me.jellysquid.mods.sodium.client.world.cloned.PackedIntegerArrayExtended;
 import me.jellysquid.mods.sodium.client.world.biome.BiomeCache;
-import me.jellysquid.mods.sodium.client.world.biome.BiomeCacheManager;
 import me.jellysquid.mods.sodium.client.world.biome.BiomeColorCache;
-import me.jellysquid.mods.sodium.common.util.pool.ReusableObject;
+import me.jellysquid.mods.sodium.client.world.cloned.ChunkRenderContext;
+import me.jellysquid.mods.sodium.client.world.cloned.ClonedChunkSection;
+import me.jellysquid.mods.sodium.client.world.cloned.ClonedChunkSectionCache;
+import me.jellysquid.mods.sodium.client.world.cloned.palette.ClonedPalette;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BitArray;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.SectionPos;
+import net.minecraft.util.math.*;
 import net.minecraft.util.palette.IPalette;
 import net.minecraft.util.palette.PalettedContainer;
 import net.minecraft.world.IBlockDisplayReader;
@@ -29,7 +29,6 @@ import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.lighting.IWorldLightListener;
 import net.minecraft.world.lighting.WorldLightManager;
 
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -42,9 +41,7 @@ import java.util.Map;
  *
  * Object pooling should be used to avoid huge allocations as this class contains many large arrays.
  */
-public class WorldSlice extends ReusableObject implements IBlockDisplayReader, BiomeManager.IBiomeReader {
-    private static final ChunkSection EMPTY_SECTION = new ChunkSection(0);
-
+public class WorldSlice implements IBlockDisplayReader, BiomeManager.IBiomeReader {
     // The number of blocks on each axis in a section.
     private static final int SECTION_BLOCK_LENGTH = 16;
 
@@ -57,9 +54,6 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
     // The radius of chunks around the origin chunk that should be copied.
     private static final int NEIGHBOR_CHUNK_RADIUS = MathHelper.roundUp(NEIGHBOR_BLOCK_RADIUS, 16) >> 4;
 
-    // The number of blocks on each axis of this slice.
-    private static final int BLOCK_LENGTH = SECTION_BLOCK_LENGTH + (NEIGHBOR_BLOCK_RADIUS * 2);
-
     // The number of sections on each axis of this slice.
     private static final int SECTION_LENGTH = 1 + (NEIGHBOR_CHUNK_RADIUS * 2);
 
@@ -70,29 +64,24 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
     // The number of bits needed for each X/Y/Z component in a lookup table.
     private static final int TABLE_BITS = Integer.bitCount(TABLE_LENGTH - 1);
 
-    // The array size for the chunk lookup table.
-    private static final int CHUNK_TABLE_ARRAY_SIZE = TABLE_LENGTH * TABLE_LENGTH;
-
     // The array size for the section lookup table.
     private static final int SECTION_TABLE_ARRAY_SIZE = TABLE_LENGTH * TABLE_LENGTH * TABLE_LENGTH;
 
-    // Local Section->BlockState table. Read-only.
+    // The world this slice has copied data from
+    private final World world;
+
+    // Local Section->BlockState table.
     private final BlockState[][] blockStatesArrays;
 
-    // A pointer to the BlockState array for the origin section.
-    private final BlockState[] originBlockStates;
+    // Local section copies. Read-only.
+    private ClonedChunkSection[] sections;
 
-    // Local Section->Light table. Read-only.
-    private final NibbleArray[] blockLightArrays;
-    private final NibbleArray[] skyLightArrays;
-
-    // Local Section->Biome table.
-    private final BiomeCache[] biomeCaches;
-    private final BiomeContainer[] biomeArrays;
+    // Biome caches for each chunk section
+    private BiomeCache[] biomeCaches;
 
     // The biome blend caches for each color resolver type
     // This map is always re-initialized, but the caches themselves are taken from an object pool
-    private final Map<ColorResolver, BiomeColorCache> colorResolvers = new Reference2ObjectOpenHashMap<>();
+    private final Map<ColorResolver, BiomeColorCache> biomeColorCaches = new Reference2ObjectOpenHashMap<>();
 
     // The previously accessed and cached color resolver, used in conjunction with the cached color cache field
     private ColorResolver prevColorResolver;
@@ -101,184 +90,138 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
     // for vertex color blending
     private BiomeColorCache prevColorCache;
 
-    // The world this slice has copied data from
-    private World world;
-
-    // Pointers to the chunks this slice encompasses
-    private Chunk[] chunks;
-
-    private BiomeCacheManager biomeCacheManager;
-
     // The starting point from which this slice captures blocks
     private int baseX, baseY, baseZ;
-
-    // The min/max bounds of the blocks copied by this slice
-    private int minX, minY, minZ;
-    private int maxX, maxY, maxZ;
 
     // The chunk origin of this slice
     private SectionPos origin;
 
-    public static Chunk[] createChunkSlice(World world, SectionPos pos) {
-        Chunk chunk = world.getChunk(pos.getX(), pos.getZ());
-        ChunkSection section = chunk.getSections()[pos.getY()];
+    public static ChunkRenderContext prepare(World world, SectionPos origin, ClonedChunkSectionCache sectionCache) {
+        Chunk chunk = world.getChunk(origin.getX(), origin.getZ());
+        ChunkSection section = chunk.getSections()[origin.getY()];
 
         // If the chunk section is absent or empty, simply terminate now. There will never be anything in this chunk
         // section to render, so we need to signal that a chunk render task shouldn't created. This saves a considerable
         // amount of time in queueing instant build tasks and greatly accelerates how quickly the world can be loaded.
-        if (section == null || section.isEmpty()) {
+        if (ChunkSection.isEmpty(section)) {
             return null;
         }
 
-        int minChunkX = pos.getX() - NEIGHBOR_CHUNK_RADIUS;
-        int minChunkZ = pos.getZ() - NEIGHBOR_CHUNK_RADIUS;
+        MutableBoundingBox volume = new MutableBoundingBox(origin.getWorldStartX() - NEIGHBOR_BLOCK_RADIUS,
+                origin.getWorldStartY() - NEIGHBOR_BLOCK_RADIUS,
+                origin.getWorldStartZ() - NEIGHBOR_BLOCK_RADIUS,
+                origin.getWorldEndX() + NEIGHBOR_BLOCK_RADIUS,
+                origin.getWorldEndY() + NEIGHBOR_BLOCK_RADIUS,
+                origin.getWorldEndZ() + NEIGHBOR_BLOCK_RADIUS);
 
-        int maxChunkX = pos.getX() + NEIGHBOR_CHUNK_RADIUS;
-        int maxChunkZ = pos.getZ() + NEIGHBOR_CHUNK_RADIUS;
+        // The min/max bounds of the chunks copied by this slice
+        final int minChunkX = origin.getX() - NEIGHBOR_CHUNK_RADIUS;
+        final int minChunkY = origin.getY() - NEIGHBOR_CHUNK_RADIUS;
+        final int minChunkZ = origin.getZ() - NEIGHBOR_CHUNK_RADIUS;
 
-        Chunk[] chunks = new Chunk[CHUNK_TABLE_ARRAY_SIZE];
+        final int maxChunkX = origin.getX() + NEIGHBOR_CHUNK_RADIUS;
+        final int maxChunkY = origin.getY() + NEIGHBOR_CHUNK_RADIUS;
+        final int maxChunkZ = origin.getZ() + NEIGHBOR_CHUNK_RADIUS;
 
-        // Create an array of references to the world chunks in this slice
-        for (int x = minChunkX; x <= maxChunkX; x++) {
-            for (int z = minChunkZ; z <= maxChunkZ; z++) {
-                chunks[getLocalChunkIndex(x - minChunkX, z - minChunkZ)] = world.getChunk(x, z);
+        ClonedChunkSection[] sections = new ClonedChunkSection[SECTION_TABLE_ARRAY_SIZE];
+
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                for (int chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+                    sections[getLocalSectionIndex(chunkX - minChunkX, chunkY - minChunkY, chunkZ - minChunkZ)] =
+                            sectionCache.acquire(chunkX, chunkY, chunkZ);
+                }
             }
         }
 
-        return chunks;
+        return new ChunkRenderContext(origin, sections, volume);
     }
 
-    public WorldSlice() {
+    public WorldSlice(World world) {
+        this.world = world;
+
+        this.sections = new ClonedChunkSection[SECTION_TABLE_ARRAY_SIZE];
         this.blockStatesArrays = new BlockState[SECTION_TABLE_ARRAY_SIZE][];
+        this.biomeCaches = new BiomeCache[SECTION_TABLE_ARRAY_SIZE];
 
         for (int x = 0; x < SECTION_LENGTH; x++) {
             for (int y = 0; y < SECTION_LENGTH; y++) {
                 for (int z = 0; z < SECTION_LENGTH; z++) {
-                    this.blockStatesArrays[getLocalSectionIndex(x, y, z)] = new BlockState[SECTION_BLOCK_COUNT];
+                    int i = getLocalSectionIndex(x, y, z);
+
+                    this.blockStatesArrays[i] = new BlockState[SECTION_BLOCK_COUNT];
+                    this.biomeCaches[i] = new BiomeCache(this.world);
                 }
             }
         }
-
-        this.blockLightArrays = new NibbleArray[SECTION_TABLE_ARRAY_SIZE];
-        this.skyLightArrays = new NibbleArray[SECTION_TABLE_ARRAY_SIZE];
-
-        this.biomeCaches = new BiomeCache[CHUNK_TABLE_ARRAY_SIZE];
-        this.biomeArrays = new BiomeContainer[CHUNK_TABLE_ARRAY_SIZE];
-
-        this.originBlockStates = this.blockStatesArrays[getLocalSectionIndex((SECTION_LENGTH / 2), (SECTION_LENGTH / 2), (SECTION_LENGTH / 2))];
     }
 
-    public void init(ChunkBuilder<?> builder, World world, SectionPos origin, Chunk[] chunks) {
-        this.world = world;
-        this.chunks = chunks;
-        this.origin = origin;
+    public void copyData(ChunkRenderContext context) {
+        this.origin = context.getOrigin();
+        this.sections = context.getSections();
 
-        this.minX = origin.getWorldStartX() - NEIGHBOR_BLOCK_RADIUS;
-        this.minY = origin.getWorldStartY() - NEIGHBOR_BLOCK_RADIUS;
-        this.minZ = origin.getWorldStartZ() - NEIGHBOR_BLOCK_RADIUS;
+        this.prevColorCache = null;
+        this.prevColorResolver = null;
 
-        this.maxX = origin.getWorldEndX() + NEIGHBOR_BLOCK_RADIUS;
-        this.maxY = origin.getWorldEndY() + NEIGHBOR_BLOCK_RADIUS;
-        this.maxZ = origin.getWorldEndZ() + NEIGHBOR_BLOCK_RADIUS;
+        this.biomeColorCaches.clear();
 
-        final int minChunkX = this.minX >> 4;
-        final int minChunkY = this.minY >> 4;
-        final int minChunkZ = this.minZ >> 4;
+        this.baseX = (this.origin.getX() - NEIGHBOR_CHUNK_RADIUS) << 4;
+        this.baseY = (this.origin.getY() - NEIGHBOR_CHUNK_RADIUS) << 4;
+        this.baseZ = (this.origin.getZ() - NEIGHBOR_CHUNK_RADIUS) << 4;
 
-        final int maxChunkX = this.maxX >> 4;
-        final int maxChunkY = this.maxY >> 4;
-        final int maxChunkZ = this.maxZ >> 4;
+        for (int x = 0; x < SECTION_LENGTH; x++) {
+            for (int y = 0; y < SECTION_LENGTH; y++) {
+                for (int z = 0; z < SECTION_LENGTH; z++) {
+                    int idx = getLocalSectionIndex(x, y, z);
 
-        this.baseX = minChunkX << 4;
-        this.baseY = minChunkY << 4;
-        this.baseZ = minChunkZ << 4;
+                    this.biomeCaches[idx].reset();
 
-        // Iterate over all sliced chunks
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                // The local index for this chunk in the slice's data arrays
-                int chunkIdx = getLocalChunkIndex(chunkX - minChunkX, chunkZ - minChunkZ);
-
-                Chunk chunk = this.chunks[chunkIdx];
-
-                for (int chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-                    SectionPos pos = SectionPos.of(chunkX, chunkY, chunkZ);
-
-                    // Find the local position of the chunk in the sliced chunk array
-                    int sectionIdx = getLocalSectionIndex(chunkX - minChunkX, chunkY - minChunkY, chunkZ - minChunkZ);
-
-                    this.populateLightArrays(sectionIdx, pos);
-                    this.populateBlockArrays(sectionIdx, pos, chunk);
+                    this.unpackBlockData(this.blockStatesArrays[idx], this.sections[idx], context.getVolume());
                 }
-
-                this.biomeArrays[chunkIdx] = chunk.getBiomes();
             }
         }
-
-        this.biomeCacheManager = builder.getBiomeCacheManager();
-        this.biomeCacheManager.populateArrays(origin.getX(), origin.getY(), origin.getZ(), this.biomeCaches);
     }
 
-    private void populateLightArrays(int sectionIdx, SectionPos pos) {
-        IWorldLightListener blockLightProvider = this.world.getLightManager().getLightEngine(LightType.BLOCK);
-        IWorldLightListener skyLightProvider = this.world.getLightManager().getLightEngine(LightType.SKY);
-
-        this.blockLightArrays[sectionIdx] = blockLightProvider.getData(pos);
-        this.skyLightArrays[sectionIdx] = skyLightProvider.getData(pos);
-    }
-
-    private void populateBlockArrays(int sectionIdx, SectionPos pos, Chunk chunk) {
-        ChunkSection section = getChunkSection(chunk, pos);
-
-        if (section == null || section.isEmpty()) {
-            section = EMPTY_SECTION;
+    private void unpackBlockData(BlockState[] states, ClonedChunkSection section, MutableBoundingBox box) {
+        if (this.origin.equals(section.getPosition()))  {
+            this.unpackBlockDataZ(states, section);
+        } else {
+            this.unpackBlockDataR(states, section, box);
         }
+    }
 
-        PalettedContainer<BlockState> container = section.getData();
+    private void unpackBlockDataR(BlockState[] states, ClonedChunkSection section, MutableBoundingBox box) {
+        BitArray intArray = section.getBlockData();
+        ClonedPalette<BlockState> palette = section.getBlockPalette();
 
-        //Access Transformers make these accessible, ignore errors about access unless they arise at compile-time
-        BitArray intArray = container.storage;
-        IPalette<BlockState> palette = container.palette;
+        SectionPos pos = section.getPosition();
 
-        BlockState[] dst = this.blockStatesArrays[sectionIdx];
+        int minBlockX = Math.max(box.minX, pos.getWorldStartX());
+        int maxBlockX = Math.min(box.maxX, pos.getWorldEndX());
 
-        int minBlockX = Math.max(this.minX, pos.getWorldStartX());
-        int maxBlockX = Math.min(this.maxX, pos.getWorldEndX());
+        int minBlockY = Math.max(box.minY, pos.getWorldStartY());
+        int maxBlockY = Math.min(box.maxY, pos.getWorldEndY());
 
-        int minBlockY = Math.max(this.minY, pos.getWorldStartY());
-        int maxBlockY = Math.min(this.maxY, pos.getWorldEndY());
-
-        int minBlockZ = Math.max(this.minZ, pos.getWorldStartZ());
-        int maxBlockZ = Math.min(this.maxZ, pos.getWorldEndZ());
-
-        int prevPaletteId = -1;
-        BlockState prevPaletteState = null;
+        int minBlockZ = Math.max(box.minZ, pos.getWorldStartZ());
+        int maxBlockZ = Math.min(box.maxZ, pos.getWorldEndZ());
 
         for (int y = minBlockY; y <= maxBlockY; y++) {
             for (int z = minBlockZ; z <= maxBlockZ; z++) {
                 for (int x = minBlockX; x <= maxBlockX; x++) {
                     int blockIdx = getLocalBlockIndex(x & 15, y & 15, z & 15);
-                    int paletteId = intArray.getAt(blockIdx);
+                    int value = intArray.getAt(blockIdx);
 
-                    BlockState state;
-
-                    if (prevPaletteId == paletteId) {
-                        state = prevPaletteState;
-                    } else {
-                        state = palette.get(paletteId);
-                        if (state == null) {
-                            state = container.defaultState;
-                        }
-
-                        prevPaletteState = state;
-                        prevPaletteId = paletteId;
-                    }
-
-                    dst[blockIdx] = state;
+                    states[blockIdx] = palette.get(value);
                 }
             }
         }
     }
+
+    private void unpackBlockDataZ(BlockState[] states, ClonedChunkSection section) {
+        ((PackedIntegerArrayExtended) section.getBlockData())
+                .copyUsingPalette(states, section.getBlockPalette());
+    }
+
 
     @Override
     public BlockState getBlockState(BlockPos pos) {
@@ -294,18 +237,14 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
                 [getLocalBlockIndex(relX & 15, relY & 15, relZ & 15)];
     }
 
-    public BlockState getOriginBlockState(int x, int y, int z) {
-        return this.originBlockStates[getLocalBlockIndex(x, y, z)];
+    public BlockState getBlockStateRelative(int x, int y, int z) {
+        return this.blockStatesArrays[getLocalSectionIndex(x >> 4, y >> 4, z >> 4)]
+                [getLocalBlockIndex(x & 15, y & 15, z & 15)];
     }
 
     @Override
     public FluidState getFluidState(BlockPos pos) {
         return this.getBlockState(pos)
-                .getFluidState();
-    }
-
-    public FluidState getFluidState(int x, int y, int z) {
-        return this.getBlockState(x, y, z)
                 .getFluidState();
     }
 
@@ -321,14 +260,16 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
 
     @Override
     public TileEntity getTileEntity(BlockPos pos) {
-        return this.getBlockEntity(pos, Chunk.CreateEntityType.IMMEDIATE);
+        return this.getBlockEntity(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public TileEntity getBlockEntity(BlockPos pos, Chunk.CreateEntityType type) {
-        int relX = pos.getX() - this.baseX;
-        int relZ = pos.getZ() - this.baseZ;
+    public TileEntity getBlockEntity(int x, int y, int z) {
+        int relX = x - this.baseX;
+        int relY = y - this.baseY;
+        int relZ = z - this.baseZ;
 
-        return this.chunks[getLocalChunkIndex(relX >> 4, relZ >> 4)].getTileEntity(pos, type);
+        return this.sections[getLocalSectionIndex(relX >> 4, relY >> 4, relZ >> 4)]
+                .getBlockEntity(relX & 15, relY & 15, relZ & 15);
     }
 
     @Override
@@ -338,10 +279,10 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
         if (this.prevColorResolver == resolver) {
             cache = this.prevColorCache;
         } else {
-            cache = this.colorResolvers.get(resolver);
+            cache = this.biomeColorCaches.get(resolver);
 
             if (cache == null) {
-                this.colorResolvers.put(resolver, cache = new BiomeColorCache(resolver, this));
+                this.biomeColorCaches.put(resolver, cache = new BiomeColorCache(resolver, this));
             }
 
             this.prevColorResolver = resolver;
@@ -353,14 +294,12 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
 
     @Override
     public int getLightFor(LightType type, BlockPos pos) {
-        switch (type) {
-            case SKY:
-                return this.getLightLevel(this.skyLightArrays, pos);
-            case BLOCK:
-                return this.getLightLevel(this.blockLightArrays, pos);
-            default:
-                return 0;
-        }
+        int relX = pos.getX() - this.baseX;
+        int relY = pos.getY() - this.baseY;
+        int relZ = pos.getZ() - this.baseZ;
+
+        return this.sections[getLocalSectionIndex(relX >> 4, relY >> 4, relZ >> 4)]
+                .getLightLevel(type, relX & 15, relY & 15, relZ & 15);
     }
 
     @Override
@@ -374,21 +313,6 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
         return false;
     }
 
-    private int getLightLevel(NibbleArray[] arrays, BlockPos pos) {
-        int relX = pos.getX() - this.baseX;
-        int relY = pos.getY() - this.baseY;
-        int relZ = pos.getZ() - this.baseZ;
-
-        NibbleArray array = arrays[getLocalSectionIndex(relX >> 4, relY >> 4, relZ >> 4)];
-
-        if (array != null) {
-            return array.get(relX & 15, relY & 15, relZ & 15);
-        }
-
-        return 0;
-    }
-
-    // TODO: Is this safe? The biome data arrays should be immutable once loaded into the client
     @Override
     public Biome getNoiseBiome(int x, int y, int z) {
         int x2 = (x >> 2) - (this.baseX >> 4);
@@ -396,10 +320,10 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
 
         // Coordinates are in biome space!
         // [VanillaCopy] WorldView#getBiomeForNoiseGen(int, int, int)
-        BiomeContainer array = this.biomeArrays[getLocalChunkIndex(x2, z2)];
+        ClonedChunkSection section = this.sections[getLocalChunkIndex(x2, z2)];
 
-        if (array != null ) {
-            return array.getNoiseBiome(x, y, z);
+        if (section != null ) {
+            return section.getBiomeForNoiseGen(x, y, z);
         }
 
         return this.world.getNoiseBiomeRaw(x, y, z);
@@ -408,38 +332,17 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
     /**
      * Gets or computes the biome at the given global coordinates.
      */
-    public Biome getCachedBiome(int x, int z) {
+    public Biome getBiome(int x, int y, int z) {
         int relX = x - this.baseX;
+        int relY = y - this.baseY;
         int relZ = z - this.baseZ;
 
-        return this.biomeCaches[getLocalChunkIndex(relX >> 4, relZ >> 4)]
-                .getBiome(this, x, z);
+        return this.biomeCaches[getLocalSectionIndex(relX >> 4, relY >> 4, relZ >> 4)]
+                .getBiome(this, x, relY >> 4, z);
     }
 
     public SectionPos getOrigin() {
         return this.origin;
-    }
-
-    @Override
-    public void reset() {
-        for (BiomeCache cache : this.biomeCaches) {
-            if (cache != null) {
-                this.biomeCacheManager.release(cache);
-            }
-        }
-
-        Arrays.fill(this.biomeCaches, null);
-        Arrays.fill(this.biomeArrays, null);
-        Arrays.fill(this.blockLightArrays, null);
-        Arrays.fill(this.skyLightArrays, null);
-
-        this.biomeCacheManager = null;
-        this.chunks = null;
-        this.world = null;
-
-        this.colorResolvers.clear();
-        this.prevColorCache = null;
-        this.prevColorResolver = null;
     }
 
     // [VanillaCopy] PalettedContainer#toIndex
@@ -453,15 +356,5 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
 
     public static int getLocalChunkIndex(int x, int z) {
         return z << TABLE_BITS | x;
-    }
-
-    private static ChunkSection getChunkSection(Chunk chunk, SectionPos pos) {
-        ChunkSection section = null;
-
-        if (!World.isYOutOfBounds(SectionPos.toWorld(pos.getY()))) {
-            section = chunk.getSections()[pos.getY()];
-        }
-
-        return section;
     }
 }

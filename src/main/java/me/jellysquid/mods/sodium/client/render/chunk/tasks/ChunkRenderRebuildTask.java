@@ -4,15 +4,14 @@ import me.jellysquid.mods.sodium.client.render.chunk.ChunkGraphicsState;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderContainer;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkMeshData;
 import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderBounds;
 import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderData;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
-import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderContext;
+import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderCacheLocal;
 import me.jellysquid.mods.sodium.client.util.task.CancellationSource;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
-import net.minecraft.block.Block;
+import me.jellysquid.mods.sodium.client.world.cloned.ChunkRenderContext;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -24,8 +23,7 @@ import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.ModelDataManager;
 import net.minecraftforge.client.model.data.EmptyModelData;
@@ -42,34 +40,34 @@ import java.util.Objects;
  */
 public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkRenderBuildTask<T> {
     private final ChunkRenderContainer<T> render;
-    private final ChunkBuilder<T> chunkBuilder;
-    private final Vector3d camera;
-    private final WorldSlice slice;
     private final BlockPos offset;
 
-    public ChunkRenderRebuildTask(ChunkBuilder<T> chunkBuilder, ChunkRenderContainer<T> render, WorldSlice slice, BlockPos offset) {
-        this.chunkBuilder = chunkBuilder;
+    private final ChunkRenderContext context;
+
+    public ChunkRenderRebuildTask(ChunkRenderContainer<T> render, ChunkRenderContext context, BlockPos offset) {
         this.render = render;
-        this.camera = chunkBuilder.getCameraPosition();
-        this.slice = slice;
         this.offset = offset;
+        this.context = context;
     }
 
     @Override
-    public ChunkBuildResult<T> performBuild(ChunkRenderContext pipeline, ChunkBuildBuffers buffers, CancellationSource cancellationSource) {
+    public ChunkBuildResult<T> performBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource) {
         ChunkRenderData.Builder renderData = new ChunkRenderData.Builder();
         VisGraph occluder = new VisGraph();
         ChunkRenderBounds.Builder bounds = new ChunkRenderBounds.Builder();
 
         buffers.init(renderData);
-        pipeline.init(this.slice, this.slice.getOrigin());
+
+        cache.init(this.context);
+
+        WorldSlice slice = cache.getWorldSlice();
 
         int baseX = this.render.getOriginX();
         int baseY = this.render.getOriginY();
         int baseZ = this.render.getOriginZ();
 
         BlockPos.Mutable pos = new BlockPos.Mutable();
-        BlockPos offset = this.offset;
+        BlockPos renderOffset = this.offset;
 
         for (int relY = 0; relY < 16; relY++) {
             if (cancellationSource.isCancelled()) {
@@ -78,20 +76,16 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
 
             for (int relZ = 0; relZ < 16; relZ++) {
                 for (int relX = 0; relX < 16; relX++) {
-                    BlockState blockState = this.slice.getOriginBlockState(relX, relY, relZ);
+                    BlockState blockState = slice.getBlockStateRelative(relX + 16, relY + 16, relZ + 16);
 
                     if (blockState.isAir()) {
                         continue;
                     }
 
-                    Block block = blockState.getBlock();
-
-                    int x = baseX + relX;
-                    int y = baseY + relY;
-                    int z = baseZ + relZ;
+                    pos.setPos(baseX + relX, baseY + relY, baseZ + relZ);
+                    buffers.setRenderOffset(pos.getX() - renderOffset.getX(), pos.getY() - renderOffset.getY(), pos.getZ() - renderOffset.getZ());
 
                     if (blockState.getRenderType() == BlockRenderType.MODEL) {
-                        buffers.setRenderOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
                         for (RenderType layer : RenderType.getBlockRenderTypes()) {
                             if (!RenderTypeLookup.canRenderInLayer(blockState, layer)) {
                                 continue;
@@ -103,7 +97,12 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                             if (modelData == null) {
                                 modelData = EmptyModelData.INSTANCE;
                             }
-                            if (pipeline.renderBlock(this.slice, blockState, pos.setPos(x, y, z), buffers.get(layer), true, modelData)) {
+                            IBakedModel model = cache.getBlockModels()
+                                    .getModel(blockState);
+
+                            long seed = blockState.getPositionRandom(pos);
+
+                            if (cache.getBlockRenderer().renderModel(slice, blockState, pos, model, buffers.get(layer), true, seed, modelData)) {
                                 bounds.addBlock(relX, relY, relZ);
                             }
                             ForgeHooksClient.setRenderLayer(null);
@@ -113,17 +112,15 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                     FluidState fluidState = blockState.getFluidState();
 
                     if (!fluidState.isEmpty()) {
-                        buffers.setRenderOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
-
                         RenderType layer = RenderTypeLookup.getRenderType(fluidState);
 
-                        if (pipeline.renderFluid(this.slice, fluidState, pos.setPos(x, y, z), buffers.get(layer))) {
+                        if (cache.getFluidRenderer().render(slice, fluidState, pos, buffers.get(layer))) {
                             bounds.addBlock(relX, relY, relZ);
                         }
                     }
 
                     if (blockState.hasTileEntity()) {
-                        TileEntity entity = this.slice.getBlockEntity(pos.setPos(x, y, z), Chunk.CreateEntityType.CHECK);
+                        TileEntity entity = slice.getTileEntity(pos);
 
                         if (entity != null) {
                             TileEntityRenderer<TileEntity> renderer = TileEntityRendererDispatcher.instance.getRenderer(entity);
@@ -136,7 +133,7 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                         }
                     }
 
-                    if (blockState.isOpaqueCube(this.slice, pos)) {
+                    if (blockState.isOpaqueCube(slice, pos)) {
                         occluder.setOpaqueCube(pos);
                     }
                 }
@@ -159,6 +156,6 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
 
     @Override
     public void releaseResources() {
-        this.chunkBuilder.releaseWorldSlice(this.slice);
+        this.context.releaseResources();
     }
 }
