@@ -49,7 +49,7 @@ public class WorldSlice implements IBlockDisplayReader, BiomeManager.IBiomeReade
     private static final int SECTION_BLOCK_COUNT = SECTION_BLOCK_LENGTH * SECTION_BLOCK_LENGTH * SECTION_BLOCK_LENGTH;
 
     // The radius of blocks around the origin chunk that should be copied.
-    private static final int NEIGHBOR_BLOCK_RADIUS = 1;
+    private static final int NEIGHBOR_BLOCK_RADIUS = 2;
 
     // The radius of chunks around the origin chunk that should be copied.
     private static final int NEIGHBOR_CHUNK_RADIUS = MathHelper.roundUp(NEIGHBOR_BLOCK_RADIUS, 16) >> 4;
